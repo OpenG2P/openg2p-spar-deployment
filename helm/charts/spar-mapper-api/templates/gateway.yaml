@@ -3,9 +3,9 @@
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
-  name: {{ include "sparMapperfullname" . }}
+  name: {{ include "mapper.fullname" . }}
   labels:
-    {{- include "sparMapperlabels" . | nindent 4 }}
+    {{- include "mapper.labels" . | nindent 4 }}
 spec:
   selector:
     {{ toYaml .Values.istio.gateway.ingressController | nindent 4 }}

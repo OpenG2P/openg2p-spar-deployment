@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "sparMapperfullname" . }}
+  name: {{ include "mapper.fullname" . }}
   labels:
-    {{- include "sparMapperlabels" . | nindent 4 }}
+    {{- include "mapper.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "sparMapperselectorLabels" . | nindent 6 }}
+      {{- include "mapper.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,13 +18,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "sparMapperselectorLabels" . | nindent 8 }}
+        {{- include "mapper.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "sparMapperserviceAccountName" . }}
+      serviceAccountName: {{ include "mapper.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
@@ -33,15 +33,15 @@ spec:
           command:
           - 'sh'
           - '-c'
-          - 'until pg_isready -U $SPAR_G2PCONNECT_MAPPER_DB_USERNAME -h $SPAR_G2PCONNECT_MAPPER_DB_HOSTNAME -p ${SPAR_G2PCONNECT_MAPPER_DB_PORT:-5432} -d ${SPAR_CORE_DB_DBNAME:-spardb}; do sleep 3; done'
-          env: {{ include "sparMapperenvVars" . | nindent 10 }}
+          - 'until pg_isready -U ${SPAR_MAPPER_DB_USERNAME} -h ${SPAR_MAPPER_DB_HOSTNAME} -p ${SPAR_MAPPER_DB_PORT:-5432} -d ${SPAR_MAPPER_DB_DBNAME:-spardb}; do sleep 3; done'
+          env: {{ include "mapper.envVars" . | nindent 10 }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          env: {{ include "sparMapperenvVars" . | nindent 10 }}
+          env: {{ include "mapper.envVars" . | nindent 10 }}
           ports:
             - name: http
               containerPort: {{ .Values.containerPort }}

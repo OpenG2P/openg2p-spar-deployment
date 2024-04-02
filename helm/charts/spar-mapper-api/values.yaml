@@ -3,7 +3,7 @@ global:
 
 replicaCount: 1
 image:
-  repository: openg2p/spar-g2pconnect-id-mapper
+  repository: openg2p/openg2p-spar-mapper-api
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "develop"
@@ -45,11 +45,10 @@ ingress:
   className: ""
   annotations:
     kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
     # kubernetes.io/tls-acme: "true"
   hosts:
     - paths:
-        - path: /mapper/v1(/|$)(.*)
+        - path: /mapper/v1
           pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls
@@ -75,14 +74,15 @@ tolerations: []
 affinity: {}
 
 envVars:
-  SPAR_G2PCONNECT_MAPPER_DB_HOSTNAME: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
-  SPAR_G2PCONNECT_MAPPER_DB_USERNAME: "sparuser"
-  SPAR_G2PCONNECT_MAPPER_OPENAPI_ROOT_PATH: "/mapper/v1"
+  SPAR_MAPPER_DB_HOSTNAME: spar-postgresql
+  SPAR_MAPPER_DB_USERNAME: "sparuser"
+  SPAR_MAPPER_DB_DBNAME: "spardb"
+  SPAR_MAPPER_OPENAPI_ROOT_PATH: "/mapper/v1"
 
 envVarsFrom:
-  SPAR_G2PCONNECT_MAPPER_DB_PASSWORD:
+  SPAR_MAPPER_DB_PASSWORD:
     secretKeyRef:
-      name: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
+      name: spar-postgresql
       key: password
 
 istio:

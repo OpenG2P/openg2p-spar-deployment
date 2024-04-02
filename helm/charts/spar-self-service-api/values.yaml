@@ -148,9 +148,9 @@ spar-g2pconnect-id-mapper:
   postgresql:
     enabled: false
   envVars:
-    SPAR_G2PCONNECT_MAPPER_DB_HOSTNAME: spar-postgresql # Change this value acc to name of the helm release.
+    SPAR_MAPPER_DB_HOSTNAME: spar-postgresql # Change this value acc to name of the helm release.
   envVarsFrom:
-    SPAR_G2PCONNECT_MAPPER_DB_PASSWORD:
+    SPAR_MAPPER_DB_PASSWORD:
       secretKeyRef:
         name: spar-postgresql # Change this value acc to name of the helm release.
 

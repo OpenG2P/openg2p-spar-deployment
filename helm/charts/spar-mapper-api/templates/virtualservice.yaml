@@ -3,9 +3,9 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: {{ include "sparMapperfullname" . }}
+  name: {{ include "mapper.fullname" . }}
   labels:
-    {{- include "sparMapperlabels" . | nindent 4 }}
+    {{- include "mapper.labels" . | nindent 4 }}
 spec:
   hosts:
   {{- if .Values.istio.virtualservice.host }}
@@ -29,7 +29,7 @@ spec:
     {{- end }}
     route:
     - destination:
-        host: {{ include "sparMapperfullname" . }}
+        host: {{ include "mapper.fullname" . }}
         port:
           number: {{ .Values.service.port }}
 {{- end }}
