@@ -15,4 +15,4 @@ kubectl -n $NS delete cm mapper-registry-schemas --ignore-not-found=true
 kubectl -n $NS create cm mapper-registry-schemas --from-file=schemas/FinancialAddressMapper.json
 
 
-helm -n $NS upgrade --install spar ../helm/charts/spar -f values.yaml --set global.hostname=$SPAR_HOSTNAME --wait $@
+helm -n $NS upgrade --install spar ../helm/charts/spar-mapper-api --set global.hostname=$SPAR_HOSTNAME --wait $@

@@ -74,7 +74,7 @@ tolerations: []
 affinity: {}
 
 envVars:
-  SPAR_MAPPER_DB_HOSTNAME: spar-postgresql
+  SPAR_MAPPER_DB_HOSTNAME: "postgres-postgresql.postgres"
   SPAR_MAPPER_DB_USERNAME: "sparuser"
   SPAR_MAPPER_DB_DBNAME: "spardb"
   SPAR_MAPPER_OPENAPI_ROOT_PATH: "/mapper/v1"
@@ -82,7 +82,7 @@ envVars:
 envVarsFrom:
   SPAR_MAPPER_DB_PASSWORD:
     secretKeyRef:
-      name: spar-postgresql
+      name: "postgres-postgresql"
       key: password
 
 istio:
