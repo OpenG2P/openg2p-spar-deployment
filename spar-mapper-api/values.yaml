@@ -1,15 +1,14 @@
 global:
-  hostname: spar.openg2p.sandbox.net
+  hostname: spar.dev.openg2p.net
 
 replicaCount: 1
 image:
-  repository: openg2p/spar-self-service-ui
+  repository: openg2p/openg2p-spar-mapper-api
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "develop"
 
 imagePullSecrets: []
-
 nameOverride: ""
 fullnameOverride: ""
 
@@ -35,7 +34,7 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-containerPort: 3000
+containerPort: 8000
 
 service:
   type: ClusterIP
@@ -46,11 +45,10 @@ ingress:
   className: ""
   annotations:
     kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
     # kubernetes.io/tls-acme: "true"
   hosts:
     - paths:
-        - path: /selfservice(/|$)(.*)
+        - path: /mapper
           pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls
@@ -76,10 +74,16 @@ tolerations: []
 affinity: {}
 
 envVars:
-  NEXT_PUBLIC_BASE_PATH: "/selfservice"
-  NEXT_PUBLIC_BASE_API_PATH: "/spar/v1"
+  SPAR_MAPPER_DB_HOSTNAME: "{{ .Values.envVars.SPAR_MAPPER_DB_HOSTNAME }}"
+  SPAR_MAPPER_DB_USERNAME: "{{ .Values.envVars.SPAR_MAPPER_DB_USERNAME}}"
+  SPAR_MAPPER_DB_DBNAME: "spardb"
+  SPAR_MAPPER_OPENAPI_ROOT_PATH: "/mapper"
 
-envVarsFrom: {}
+envVarsFrom:
+  SPAR_MAPPER_DB_PASSWORD:
+    secretKeyRef:
+      name: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
+      key: password
 
 istio:
   enabled: true
@@ -87,8 +91,8 @@ istio:
     enabled: true
     host: ""
     gateway: "istio-system/all-hosts"
-    prefix: "/selfservice"
-    redirectToSparEnabled: true
+    prefix: "/mapper/"
+    rewriteUri: "/"
   gateway:
     enabled: false
     host: ""
@@ -99,3 +103,14 @@ istio:
       enabled: true
       mode: SIMPLE
       credentialName: ""
+
+postgresql:
+  enabled: true
+  auth:
+    username: sparuser
+    database: spardb
+  primary:
+    extendedConfiguration: |-
+      wal_level = logical
+      max_wal_senders = 20
+      max_replication_slots = 10
