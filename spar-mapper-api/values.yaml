@@ -76,7 +76,7 @@ affinity: {}
 envVars:
   SPAR_MAPPER_DB_HOSTNAME: "{{ .Values.envVars.SPAR_MAPPER_DB_HOSTNAME }}"
   SPAR_MAPPER_DB_USERNAME: "{{ .Values.envVars.SPAR_MAPPER_DB_USERNAME}}"
-  SPAR_MAPPER_DB_DBNAME: "spardb"
+  SPAR_MAPPER_DB_DBNAME: "openg2p_spar_db"
   SPAR_MAPPER_OPENAPI_ROOT_PATH: "/mapper"
 
 envVarsFrom:
@@ -107,8 +107,8 @@ istio:
 postgresql:
   enabled: true
   auth:
-    username: sparuser
-    database: spardb
+    username: openg2p_spar_user
+    database: openg2p_spar_db
   primary:
     extendedConfiguration: |-
       wal_level = logical
