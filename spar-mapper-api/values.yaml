@@ -48,7 +48,7 @@ ingress:
     # kubernetes.io/tls-acme: "true"
   hosts:
     - paths:
-        - path: /mapper
+        - path: /
           pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls
@@ -77,7 +77,7 @@ envVars:
   SPAR_MAPPER_DB_HOSTNAME: "{{ .Values.envVars.SPAR_MAPPER_DB_HOSTNAME }}"
   SPAR_MAPPER_DB_USERNAME: "{{ .Values.envVars.SPAR_MAPPER_DB_USERNAME}}"
   SPAR_MAPPER_DB_DBNAME: "openg2p_spar_db"
-  SPAR_MAPPER_OPENAPI_ROOT_PATH: "/mapper"
+  SPAR_MAPPER_OPENAPI_ROOT_PATH: "/"
 
 envVarsFrom:
   SPAR_MAPPER_DB_PASSWORD:
@@ -91,7 +91,7 @@ istio:
     enabled: true
     host: ""
     gateway: "istio-system/all-hosts"
-    prefix: "/mapper/"
+    prefix: "/"
     rewriteUri: "/"
   gateway:
     enabled: false
