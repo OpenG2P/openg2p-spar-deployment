@@ -74,15 +74,15 @@ tolerations: []
 affinity: {}
 
 envVars:
-  SPAR_MAPPER_DB_HOSTNAME: "{{ .Values.envVars.SPAR_MAPPER_DB_HOSTNAME }}"
-  SPAR_MAPPER_DB_USERNAME: "{{ .Values.envVars.SPAR_MAPPER_DB_USERNAME}}"
-  SPAR_MAPPER_DB_DBNAME: "openg2p_spar_db"
+  SPAR_MAPPER_DB_HOSTNAME: "postgres-postgresql.postgres"
+  SPAR_MAPPER_DB_USERNAME: "sparuser"
+  SPAR_MAPPER_DB_DBNAME: "spardb"
   SPAR_MAPPER_OPENAPI_ROOT_PATH: "/"
 
 envVarsFrom:
   SPAR_MAPPER_DB_PASSWORD:
     secretKeyRef:
-      name: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
+      name: "postgres-postgresql"
       key: password
 
 istio:
@@ -107,8 +107,8 @@ istio:
 postgresql:
   enabled: true
   auth:
-    username: openg2p_spar_user
-    database: openg2p_spar_db
+    username: sparuser
+    database: spardb
   primary:
     extendedConfiguration: |-
       wal_level = logical
