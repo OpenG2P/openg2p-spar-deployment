@@ -6,5 +6,5 @@
 cd spar-self-service-api/scripts
 ```
 ```bash
-SPAR_HOSTNAME=selfservice.dev.openg2p.net SANDBOX_HOSTNAME=dev.openg2p.net ./install.sh
+SPAR_HOSTNAME=selfservice.sandbox.openg2p.net SANDBOX_HOSTNAME=sandbox.openg2p.net ./install.sh
 ```

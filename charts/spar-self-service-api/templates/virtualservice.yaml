@@ -3,9 +3,9 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: {{ include "mapper.fullname" . }}
+  name: {{ include "selfservice.fullname" . }}
   labels:
-    {{- include "mapper.labels" . | nindent 4 }}
+    {{- include "selfservice.labels" . | nindent 4 }}
 spec:
   hosts:
   {{- if .Values.istio.virtualservice.host }}
@@ -29,7 +29,7 @@ spec:
     {{- end }}
     route:
     - destination:
-        host: {{ include "mapper.fullname" . }}
+        host: {{ include "selfservice.fullname" . }}
         port:
           number: {{ .Values.service.port }}
 {{- end }}

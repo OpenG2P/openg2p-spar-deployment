@@ -1,5 +1,5 @@
 global:
-  hostname: spar.dev.openg2p.net
+  hostname: spar.sandbox.openg2p.net
 
 replicaCount: 1
 image:
@@ -74,7 +74,7 @@ tolerations: []
 affinity: {}
 
 envVars:
-  SPAR_MAPPER_DB_HOSTNAME: "postgres-postgresql.postgres"
+  SPAR_MAPPER_DB_HOSTNAME: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
   SPAR_MAPPER_DB_USERNAME: "sparuser"
   SPAR_MAPPER_DB_DBNAME: "spardb"
   SPAR_MAPPER_OPENAPI_ROOT_PATH: "/"
@@ -82,7 +82,7 @@ envVars:
 envVarsFrom:
   SPAR_MAPPER_DB_PASSWORD:
     secretKeyRef:
-      name: "postgres-postgresql"
+      name: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
       key: password
 
 istio:

@@ -3,9 +3,9 @@
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
-  name: {{ include "mapper.fullname" . }}
+  name: {{ include "selfservice.fullname" . }}
   labels:
-    {{- include "mapper.labels" . | nindent 4 }}
+    {{- include "selfservice.labels" . | nindent 4 }}
 spec:
   selector:
     {{ toYaml .Values.istio.gateway.ingressController | nindent 4 }}
