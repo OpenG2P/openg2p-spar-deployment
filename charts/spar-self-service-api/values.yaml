@@ -1,9 +1,9 @@
 global:
-  hostname: spar.dev.openg2p.net
+  hostname: selfservice.sandbox.openg2p.net
 
 replicaCount: 1
 image:
-  repository: openg2p/openg2p-spar-mapper-api
+  repository: openg2p/openg2p-spar-self-service-api
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "develop"
@@ -48,7 +48,7 @@ ingress:
     # kubernetes.io/tls-acme: "true"
   hosts:
     - paths:
-        - path: /
+        - path: /api(/|$)(.*)
           pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls
@@ -74,13 +74,25 @@ tolerations: []
 affinity: {}
 
 envVars:
-  SPAR_MAPPER_DB_HOSTNAME: "{{ .Values.envVars.SPAR_MAPPER_DB_HOSTNAME }}"
-  SPAR_MAPPER_DB_USERNAME: "{{ .Values.envVars.SPAR_MAPPER_DB_USERNAME}}"
-  SPAR_MAPPER_DB_DBNAME: "openg2p_spar_db"
-  SPAR_MAPPER_OPENAPI_ROOT_PATH: "/"
+  SPAR_CORE_DB_HOSTNAME: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
+  SPAR_CORE_DB_USERNAME: "sparuser"
+  SPAR_CORE_DB_DBNAME: "spardb"
+  SPAR_CORE_OPENAPI_ROOT_PATH: "/api"
+  SPAR_CORE_DEFAULT_ID_TOKEN_VERIFY_AT_HASH: "false"
+  SPAR_CORE_AUTH_COOKIE_SECURE: "false"
+  SPAR_CORE_AUTH_COOKIE_SET_EXPIRES: "true"
+
+  SPAR_CORE_AUTH_DEFAULT_ISSUERS: '["https://esignet.dev.openg2p.net/v1/esignet","https://keycloak.dev.openg2p.net/realms/openg2p"]'
+  SPAR_CORE_AUTH_DEFAULT_JWKS_URLS: '["https://esignet.dev.openg2p.net/v1/esignet/oauth/.well-known/jwks.json","https://keycloak.dev.openg2p.net/realms/openg2p/protocol/openid-connect/certs"]'
+
+  SPAR_CORE_MAPPER_API_URL: 'https://mapper.qa.openg2p.net/mapper/sync'
+  SPAR_CORE_MAPPER_LINK_PATH: "/link"
+  SPAR_CORE_MAPPER_UNLINK_PATH: "/unlink"
+  SPAR_CORE_MAPPER_RESOLVE_PATH: "/resolve"
+  SPAR_CORE_MAPPER_UPDATE_PATH: "/update"
 
 envVarsFrom:
-  SPAR_MAPPER_DB_PASSWORD:
+  SPAR_CORE_DB_PASSWORD:
     secretKeyRef:
       name: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
       key: password
@@ -91,7 +103,7 @@ istio:
     enabled: true
     host: ""
     gateway: "istio-system/all-hosts"
-    prefix: "/"
+    prefix: "/api/"
     rewriteUri: "/"
   gateway:
     enabled: false
@@ -107,8 +119,8 @@ istio:
 postgresql:
   enabled: true
   auth:
-    username: openg2p_spar_user
-    database: openg2p_spar_db
+    username: sparuser
+    database: spardb
   primary:
     extendedConfiguration: |-
       wal_level = logical

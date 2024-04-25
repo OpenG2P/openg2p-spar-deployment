@@ -33,7 +33,7 @@ spec:
           command:
           - 'sh'
           - '-c'
-          - 'until pg_isready -U ${SPAR_MAPPER_DB_USERNAME} -h ${SPAR_MAPPER_DB_HOSTNAME} -p ${SPAR_MAPPER_DB_PORT:-5432} -d ${SPAR_MAPPER_DB_DBNAME:-openg2p_spar_db}; do sleep 3; done'
+          - 'until pg_isready -U ${SPAR_MAPPER_DB_USERNAME} -h ${SPAR_MAPPER_DB_HOSTNAME} -p ${SPAR_MAPPER_DB_PORT:-5432} -d ${SPAR_MAPPER_DB_DBNAME:-spar_db}; do sleep 3; done'
           env: {{ include "mapper.envVars" . | nindent 10 }}
       containers:
         - name: {{ .Chart.Name }}

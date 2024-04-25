@@ -1,10 +1,7 @@
-# SPAR Mapper API Env Variables
-
-enabled: true
-
 envVars:
   SPAR_MAPPER_DB_HOSTNAME: "postgres-postgresql.postgres"
-  SPAR_MAPPER_DB_USERNAME: "openg2p_spar_user"
+  SPAR_MAPPER_DB_DBNAME: "spar_qa"
+  SPAR_MAPPER_DB_USERNAME: "sparuser"
 
 envVarsFrom:
   SPAR_MAPPER_DB_PASSWORD:
