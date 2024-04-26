@@ -1,0 +1,40 @@
+global:
+  hostname: spar.sandbox.openg2p.net
+
+postgresql:
+  enabled: true
+  auth:
+    username: sparuser
+    database: spardb
+  primary:
+    extendedConfiguration: |-
+      wal_level = logical
+      max_wal_senders = 20
+      max_replication_slots = 10
+
+spar-mapper-api:
+  enabled: true
+  fullnameOverride: mapper
+  postgresql:
+    enabled: false
+
+sunbird-rc-g2p-mapper-registry:
+  enabled: false
+  fullnameOverride: mapper
+  postgresql:
+    enabled: false
+
+spar-self-service-api:
+  enabled: true
+  postgresql:
+    enabled: false
+  istio:
+    enabled: false
+
+spar-self-service-ui:
+  enabled: true
+  istio:
+    virtualservice:
+      api:
+        enabled: true
+        serviceName: '{{ include "selfservice.fullname" . }}'

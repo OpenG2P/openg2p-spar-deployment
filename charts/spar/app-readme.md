@@ -1,0 +1,1 @@
+Install OpenG2P Social Payments Account Registry and all the requirements on your Kubernetes Cluster.

@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "selfservice.fullname" . }}
+  name: {{ include "selfserviceUi.fullname" . }}
   labels:
-    {{- include "selfservice.labels" . | nindent 4 }}
+    {{- include "selfserviceUi.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -13,7 +13,7 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "selfservice.selectorLabels" . | nindent 6 }}
+      {{- include "selfserviceUi.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -22,13 +22,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "selfservice.selectorLabels" . | nindent 8 }}
+        {{- include "selfserviceUi.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "selfservice.serviceAccountName" . }}
+      serviceAccountName: {{ include "selfserviceUi.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       {{- with .Values.nodeSelector }}
@@ -43,15 +43,6 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      initContainers:
-        {{- if .Values.postgresCheckerInit.enabled }}
-        - name: postgres-checker
-          image: {{ .Values.postgresCheckerInit.image }}
-          command:
-            {{- toYaml .Values.postgresCheckerInit.command | nindent 12 }}
-          env:
-            {{ include "selfservice.envVars" . | nindent 12 }}
-        {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -63,7 +54,7 @@ spec:
               containerPort: {{ .Values.containerPort }}
               protocol: TCP
           env: 
-            {{ include "selfservice.envVars" . | nindent 12 }}
+            {{ include "selfserviceUi.envVars" . | nindent 12 }}
           {{- with .Values.command }}
           command:
             {{- toYaml . | nindent 12 }}

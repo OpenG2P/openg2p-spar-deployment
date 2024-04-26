@@ -37,8 +37,8 @@ spec:
     {{- end }}
   {{- end }}
   rules:
-    - host: {{ .Values.global.hostname | quote }}
     {{- range .Values.ingress.hosts }}
+    - host: {{- .host | ternary .host .Values.global.hostname | quote }}
       http:
         paths:
           {{- range .paths }}
