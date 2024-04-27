@@ -8,6 +8,9 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
+  {{- with .Values.updateStrategy }}
+  strategy: {{- toYaml . | nindent 4 }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "mapper.selectorLabels" . | nindent 6 }}
@@ -15,6 +18,7 @@ spec:
     metadata:
       {{- with .Values.podAnnotations }}
       annotations:
+        helm.sh/revision: {{- .Release.Revision }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
@@ -27,42 +31,6 @@ spec:
       serviceAccountName: {{ include "mapper.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      initContainers:
-        - name: postgres-checker
-          image: jbergknoff/postgresql-client
-          command:
-          - 'sh'
-          - '-c'
-          - 'until pg_isready -U ${SPAR_MAPPER_DB_USERNAME} -h ${SPAR_MAPPER_DB_HOSTNAME} -p ${SPAR_MAPPER_DB_PORT:-5432} -d ${SPAR_MAPPER_DB_DBNAME:-spar_db}; do sleep 3; done'
-          env: {{ include "mapper.envVars" . | nindent 10 }}
-      containers:
-        - name: {{ .Chart.Name }}
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          env: {{ include "mapper.envVars" . | nindent 10 }}
-          ports:
-            - name: http
-              containerPort: {{ .Values.containerPort }}
-              protocol: TCP
-          readinessProbe:
-            httpGet:
-              path: /ping
-              port: {{ .Values.containerPort }}
-            failureThreshold: 20
-            periodSeconds: 30
-            timeoutSeconds: 10
-            initialDelaySeconds: 30
-          livenessProbe:
-            httpGet:
-              path: /ping
-              port: {{ .Values.containerPort }}
-            initialDelaySeconds: 15
-            periodSeconds: 60
-            failureThreshold: 5
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -75,3 +43,44 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      initContainers:
+        {{- if .Values.postgresCheckerInit.enabled }}
+        - name: postgres-checker
+          image: {{ .Values.postgresCheckerInit.image }}
+          command:
+            {{- toYaml .Values.postgresCheckerInit.command | nindent 12 }}
+          env:
+            {{ include "mapper.envVars" . | nindent 12 }}
+        {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.containerPort }}
+              protocol: TCP
+          env: 
+            {{ include "mapper.envVars" . | nindent 12 }}
+          {{- with .Values.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe: 
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe: 
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

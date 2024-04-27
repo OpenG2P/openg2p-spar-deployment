@@ -1,0 +1,15 @@
+dependencies:
+- name: postgresql
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 13.4.6
+- name: spar-mapper-api
+  repository: ""
+  version: 0.1.0
+- name: spar-self-service-api
+  repository: ""
+  version: 0.1.0
+- name: spar-self-service-ui
+  repository: ""
+  version: 0.1.0
+digest: sha256:67c344f818c132e9515a9ec73b6b8d2c12568fa70daaea0db02125595953eb0e
+generated: "2024-04-26T20:51:33.376073282+05:30"

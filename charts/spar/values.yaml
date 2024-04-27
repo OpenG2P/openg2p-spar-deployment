@@ -1,0 +1,46 @@
+global:
+  hostname: spar.sandbox.openg2p.net
+
+postgresql:
+  enabled: true
+  auth:
+    username: sparuser
+    database: spardb
+  primary:
+    extendedConfiguration: |-
+      wal_level = logical
+      max_wal_senders = 20
+      max_replication_slots = 10
+
+spar-mapper-api:
+  enabled: true
+  postgresql:
+    enabled: false
+  envVars:
+    SPAR_MAPPER_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
+  envVarsFrom:
+    SPAR_MAPPER_DB_PASSWORD:
+      secretKeyRef:
+        name: '{{ .Release.Name }}-postgresql'
+
+spar-self-service-api:
+  enabled: true
+  postgresql:
+    enabled: false
+  istio:
+    enabled: false
+  envVars:
+    SPAR_SELFSERVICE_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
+    SPAR_SELFSERVICE_MAPPER_API_URL: 'http://{{ .Release.Name }}-spar-mapper-api/mapper/sync'
+  envVarsFrom:
+    SPAR_SELFSERVICE_DB_PASSWORD:
+      secretKeyRef:
+        name: '{{ .Release.Name }}-postgresql'
+
+spar-self-service-ui:
+  enabled: true
+  istio:
+    virtualservice:
+      api:
+        enabled: true
+        serviceName: '{{ include "selfservice.fullname" . }}'

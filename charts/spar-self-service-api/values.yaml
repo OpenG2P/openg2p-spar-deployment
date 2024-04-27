@@ -1,16 +1,68 @@
 global:
-  hostname: selfservice.sandbox.openg2p.net
+  hostname: spar.openg2p.sandbox.net
 
 replicaCount: 1
 image:
   repository: openg2p/openg2p-spar-self-service-api
   pullPolicy: Always
-  # Overrides the image tag whose default is the chart appVersion.
   tag: "develop"
 
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
+
+envVars:
+  SPAR_SELFSERVICE_DB_HOSTNAME: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
+  SPAR_SELFSERVICE_DB_USERNAME: "sparuser"
+  SPAR_SELFSERVICE_DB_DBNAME: "spardb"
+  SPAR_SELFSERVICE_OPENAPI_ROOT_PATH: "/selfservice/api"
+  SPAR_SELFSERVICE_DEFAULT_ID_TOKEN_VERIFY_AT_HASH: "false"
+
+  SPAR_SELFSERVICE_AUTH_DEFAULT_ISSUERS: '["https://esignet.openg2p.sandbox.net/v1/esignet","https://keycloak.openg2p.sandbox.net/realms/openg2p"]'
+  SPAR_SELFSERVICE_AUTH_DEFAULT_JWKS_URLS: '["https://esignet.openg2p.sandbox.net/v1/esignet/oauth/.well-known/jwks.json","https://keycloak.openg2p.sandbox.net/realms/openg2p/protocol/openid-connect/certs"]'
+
+  SPAR_SELFSERVICE_MAPPER_API_URL: 'http://mapper/mapper/sync'
+
+envVarsFrom:
+  SPAR_SELFSERVICE_DB_PASSWORD:
+    secretKeyRef:
+      name: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
+      key: password
+
+containerPort: 8000
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources: {}
+  #  requests:
+  #    cpu: 500m
+  #    memory: 2G
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 1
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+readinessProbe:
+  httpGet:
+    path: /ping
+    port: 8000
+  failureThreshold: 20
+  periodSeconds: 30
+  timeoutSeconds: 10
+  initialDelaySeconds: 30
+
+livenessProbe:
+  httpGet:
+    path: /ping
+    port: 8000
+  initialDelaySeconds: 15
+  periodSeconds: 60
+  failureThreshold: 5
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -34,11 +86,25 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-containerPort: 8000
+nodeSelector: {}
 
-service:
-  type: ClusterIP
-  port: 80
+tolerations: []
+
+affinity: {}
+
+updateStrategy:
+  type: RollingUpdate
+
+command: []
+args: []
+
+postgresCheckerInit:
+  enabled: true
+  image: jbergknoff/postgresql-client
+  command:
+  - 'sh'
+  - '-c'
+  - 'until pg_isready -U ${SPAR_SELFSERVICE_DB_USERNAME} -h ${SPAR_SELFSERVICE_DB_HOSTNAME} -p ${SPAR_SELFSERVICE_DB_PORT:-5432} -d ${SPAR_SELFSERVICE_DB_DBNAME:-spar_db}; do sleep 3; done'
 
 ingress:
   enabled: false
@@ -47,55 +113,14 @@ ingress:
     kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
-    - paths:
+    - host: ""
+      paths:
         - path: /api(/|$)(.*)
           pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
-
-resources: {}
-  #  requests:
-  #    cpu: 500m
-  #    memory: 2G
-
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 1
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
-
-envVars:
-  SPAR_CORE_DB_HOSTNAME: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
-  SPAR_CORE_DB_USERNAME: "sparuser"
-  SPAR_CORE_DB_DBNAME: "spardb"
-  SPAR_CORE_OPENAPI_ROOT_PATH: "/api"
-  SPAR_CORE_DEFAULT_ID_TOKEN_VERIFY_AT_HASH: "false"
-  SPAR_CORE_AUTH_COOKIE_SECURE: "false"
-  SPAR_CORE_AUTH_COOKIE_SET_EXPIRES: "true"
-
-  SPAR_CORE_AUTH_DEFAULT_ISSUERS: '["https://esignet.dev.openg2p.net/v1/esignet","https://keycloak.dev.openg2p.net/realms/openg2p"]'
-  SPAR_CORE_AUTH_DEFAULT_JWKS_URLS: '["https://esignet.dev.openg2p.net/v1/esignet/oauth/.well-known/jwks.json","https://keycloak.dev.openg2p.net/realms/openg2p/protocol/openid-connect/certs"]'
-
-  SPAR_CORE_MAPPER_API_URL: 'https://mapper.qa.openg2p.net/mapper/sync'
-  SPAR_CORE_MAPPER_LINK_PATH: "/link"
-  SPAR_CORE_MAPPER_UNLINK_PATH: "/unlink"
-  SPAR_CORE_MAPPER_RESOLVE_PATH: "/resolve"
-  SPAR_CORE_MAPPER_UPDATE_PATH: "/update"
-
-envVarsFrom:
-  SPAR_CORE_DB_PASSWORD:
-    secretKeyRef:
-      name: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
-      key: password
 
 istio:
   enabled: true
