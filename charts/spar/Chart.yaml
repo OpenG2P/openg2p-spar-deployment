@@ -1,22 +1,22 @@
 apiVersion: v2
 name: spar
-description: A Helm chart for OpenG2P Social Payments Account Registry
+description: A Helm chart for OpenG2P SPAR
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
+version: 1.0.0
+appVersion: "1.0.0"
 dependencies:
 - name: postgresql
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 13.x.x
   condition: postgresql.enabled
 - name: spar-mapper-api
-  version: 0.1.0
+  version: 1.0.0
   condition: spar-mapper-api.enabled
 - name: spar-self-service-api
-  version: 0.1.0
+  version: 1.0.0 
   condition: spar-self-service-api.enabled
 - name: spar-self-service-ui
-  version: 0.1.0
+  version: 1.0.0 
   condition: spar-self-service-ui.enabled
 icon: https://openg2p.github.io/openg2p-helm/openg2p-logo.png
 annotations:

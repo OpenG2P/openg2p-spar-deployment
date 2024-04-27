@@ -1,3 +1,3 @@
 ## SPAR
 
-OpenG2P Social Payments Account Registry Helm chart
+Wrapper chart to install all components of SPAR.
