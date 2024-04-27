@@ -1,0 +1,16 @@
+questions:
+- variable: spar-mapper-api.enabled
+  default: true
+  description: Install SPAR Mapper
+  type: boolean
+  label: "SPAR Mapper" 
+- variable: spar-self-service-api.enabled
+  default: true
+  description: Install self-service portal backend 
+  type: boolean
+  label: "SPAR Self Service API" 
+- variable: spar-self-service-ui.enabled
+  default: true
+  description: Install self-service portal frontend
+  type: boolean
+  label: "SPAR Self Service UI" 
