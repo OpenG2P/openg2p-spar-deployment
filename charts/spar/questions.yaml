@@ -1,4 +1,9 @@
 questions:
+- variable: global.hostname
+  default: spar.sandbox.openg2p.net
+  description: Hostname under which all SPAR services will be accessed
+  type: string 
+  label: "Global Hostname"
 - variable: spar-mapper-api.enabled
   default: true
   description: Install SPAR Mapper
