@@ -3,9 +3,9 @@ global:
 
 replicaCount: 1
 image:
-  repository: openg2p/spar-self-service-ui
+  repository: openg2p/openg2p-spar-self-service-ui
   pullPolicy: Always
-  tag: "develop"
+  tag: "1.0.0"
 
 imagePullSecrets: []
 nameOverride: ""

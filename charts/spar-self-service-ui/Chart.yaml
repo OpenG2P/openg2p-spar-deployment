@@ -3,5 +3,4 @@ name: spar-self-service-ui
 description: A Helm chart for OpenG2P SPAR Self Service UI
 type: application
 version: 1.0.0
-appVersion: "1.0.0"
 icon: https://openg2p.github.io/openg2p-helm/openg2p-logo.png
