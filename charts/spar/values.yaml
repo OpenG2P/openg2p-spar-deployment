@@ -1,5 +1,6 @@
 global:
   hostname: spar.sandbox.openg2p.net
+  esignetBaseUrl: https://esignet.sandbox.openg2p.net
 
 postgresql:
   enabled: true
@@ -32,6 +33,8 @@ spar-self-service-api:
   envVars:
     SPAR_SELFSERVICE_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
     SPAR_SELFSERVICE_MAPPER_API_URL: 'http://{{ .Release.Name }}-spar-mapper-api/mapper/sync'
+    SPAR_SELFSERVICE_AUTH_DEFAULT_ISSUERS: '["{{ .Values.global.esignetBaseUrl }}/v1/esignet"]'
+    SPAR_SELFSERVICE_AUTH_DEFAULT_JWKS_URLS: '["{{ .Values.global.esignetBaseUrl }}/v1/esignet/oauth/.well-known/jwks.json"]'
   envVarsFrom:
     SPAR_SELFSERVICE_DB_PASSWORD:
       secretKeyRef:

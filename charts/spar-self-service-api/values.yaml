@@ -21,7 +21,7 @@ envVars:
   SPAR_SELFSERVICE_AUTH_DEFAULT_ISSUERS: '["https://esignet.openg2p.sandbox.net/v1/esignet","https://keycloak.openg2p.sandbox.net/realms/openg2p"]'
   SPAR_SELFSERVICE_AUTH_DEFAULT_JWKS_URLS: '["https://esignet.openg2p.sandbox.net/v1/esignet/oauth/.well-known/jwks.json","https://keycloak.openg2p.sandbox.net/realms/openg2p/protocol/openid-connect/certs"]'
 
-  SPAR_SELFSERVICE_MAPPER_API_URL: 'http://mapper/mapper/sync'
+  SPAR_SELFSERVICE_MAPPER_API_URL: 'http://mapper/sync'
 
 envVarsFrom:
   SPAR_SELFSERVICE_DB_PASSWORD:
@@ -110,12 +110,13 @@ ingress:
   enabled: false
   className: ""
   annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
     kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
     - host: ""
       paths:
-        - path: /api(/|$)(.*)
+        - path: /selfservice/api(/|$)(.*)
           pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls
@@ -128,7 +129,7 @@ istio:
     enabled: true
     host: ""
     gateway: "istio-system/all-hosts"
-    prefix: "/api/"
+    prefix: "/selfservice/api/"
     rewriteUri: "/"
   gateway:
     enabled: false
@@ -151,3 +152,28 @@ postgresql:
       wal_level = logical
       max_wal_senders = 20
       max_replication_slots = 10
+
+postgresInit:
+  enabled: true
+  image: jbergknoff/postgresql-client
+  imagePullPolicy: Always
+  restartPolicy: Never
+  envVars:
+    GIT_REPO_URL: 'https://github.com/openg2p/openg2p-spar-self-service'
+    GIT_BRANCH: 'develop'
+    WAIT_BEFORE_STARTUP: 10s
+  envVarsFrom: {}
+  backoffLimit: 1
+  command:
+  - sh
+  - -c
+  - >-
+    sleep $WAIT_BEFORE_STARTUP;
+    apk --no-cache add bash gettext git;
+    export DB_HOST=$SPAR_CORE_DB_HOSTNAME;
+    export DB_USER=$SPAR_CORE_DB_USERNAME;
+    export DB_USER_PASSWORD=$SPAR_CORE_DB_PASSWORD;
+    git_repo_name="$(basename "$GIT_REPO_URL" .git)";
+    git clone --depth 1 --branch $GIT_BRANCH $GIT_REPO_URL &&
+    cd $git_repo_name/db_scripts &&
+    ./deploy.sh

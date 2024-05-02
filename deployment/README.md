@@ -1,12 +1,7 @@
-## SPAR Mapper API Deployment
+## SPAR Deployment
 
 ### How to deploy
 
 ```bash
-cd spar-mapper-api/scripts
-```
-```bash
-SPAR_MAPPER_HOSTNAME=mapper.qa.openg2p.net \
-SPAR_SELF_SERVICE_HOSTNAME=selfservice.qa.openg2p.net SANDBOX_HOSTNAME=qa.openg2p.net \
-./install.sh
+SANDBOX_HOSTNAME=openg2p.sandbox.net ./install.sh
 ```
