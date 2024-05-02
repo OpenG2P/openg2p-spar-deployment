@@ -13,6 +13,7 @@ postgresql:
       max_wal_senders = 20
       max_replication_slots = 10
 
+
 spar-mapper-api:
   enabled: true
   postgresql:
