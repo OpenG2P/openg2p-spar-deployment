@@ -30,7 +30,7 @@ spar-self-service-api:
     enabled: false
   envVars:
     SPAR_SELFSERVICE_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
-    SPAR_SELFSERVICE_MAPPER_API_URL: 'http://{{ .Release.Name }}-spar-mapper-api/mapper/sync'
+    SPAR_SELFSERVICE_MAPPER_API_URL: 'http://{{ .Release.Name }}-spar-mapper-api/sync'
     SPAR_SELFSERVICE_AUTH_DEFAULT_ISSUERS: '["{{ .Values.global.esignetBaseUrl }}/v1/esignet"]'
     SPAR_SELFSERVICE_AUTH_DEFAULT_JWKS_URLS: '["{{ .Values.global.esignetBaseUrl }}/v1/esignet/oauth/.well-known/jwks.json"]'
   envVarsFrom:
