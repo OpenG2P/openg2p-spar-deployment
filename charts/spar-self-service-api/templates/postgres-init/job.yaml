@@ -1,0 +1,24 @@
+{{- if .Values.postgresInit.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "selfservice.fullname" . }}-postgres-init
+  labels:
+    {{- include "selfservice.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+spec:
+  backoffLimit: {{ .Values.postgresInit.backoffLimit }}
+  template:
+    spec:
+      restartPolicy: {{ .Values.postgresInit.restartPolicy }}
+      serviceAccountName: {{ include "selfservice.serviceAccountName" . }}
+      containers:
+        - name: postgres-init
+          image: {{ .Values.postgresInit.image }}
+          imagePullPolicy: {{ .Values.postgresInit.imagePullPolicy }}
+          env:
+          {{ include "selfservice.envVars" . | nindent 10 }}
+          {{ include "selfservice.postgresInitEnvVars" . | nindent 10 }}
+          command: {{ toYaml .Values.postgresInit.command | nindent 10 }}
+{{- end }}

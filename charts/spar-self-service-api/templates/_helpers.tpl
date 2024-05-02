@@ -83,3 +83,26 @@ Render Env values section
     {{- end }}
 {{- end }}
 {{- end }}
+
+{{/*
+Render Postgres Init Env values
+*/}}
+{{- define "selfservice.postgresInitEnvVars" -}}
+{{- range $k, $v := .Values.postgresInit.envVars }}
+- name: {{ $k }}
+  value: {{ tpl $v $ | quote }}
+{{- end }}
+{{- range $k, $v := .Values.postgresInit.envVarsFrom }}
+- name: {{ $k }}
+  valueFrom:
+    {{- if $v.configMapKeyRef }}
+    configMapKeyRef:
+      name: {{ tpl $v.configMapKeyRef.name $ | quote }}
+      key: {{ tpl $v.configMapKeyRef.key $ | quote }}
+    {{- else if $v.secretKeyRef }}
+    secretKeyRef:
+      name: {{ tpl $v.secretKeyRef.name $ | quote }}
+      key: {{ tpl $v.secretKeyRef.key $ | quote }}
+    {{- end }}
+{{- end }}
+{{- end }}
