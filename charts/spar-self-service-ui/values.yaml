@@ -37,7 +37,7 @@ autoscaling:
 
 readinessProbe:
   httpGet:
-    path: /
+    path: /selfservice
     port: 3000
   failureThreshold: 20
   periodSeconds: 30
@@ -46,7 +46,7 @@ readinessProbe:
 
 livenessProbe:
   httpGet:
-    path: /
+    path: /selfservice
     port: 3000
   initialDelaySeconds: 15
   periodSeconds: 60
