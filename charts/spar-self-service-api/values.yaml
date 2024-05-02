@@ -129,7 +129,7 @@ istio:
   virtualservice:
     enabled: true
     host: ""
-    gateway: "istio-system/all-hosts"
+    gateway: "all-hosts"
     prefix: "/selfservice/api/"
     rewriteUri: "/"
   gateway:
@@ -171,9 +171,9 @@ postgresInit:
   - >-
     sleep $WAIT_BEFORE_STARTUP;
     apk --no-cache add bash gettext git;
-    export DB_HOST=$SPAR_CORE_DB_HOSTNAME;
-    export DB_USER=$SPAR_CORE_DB_USERNAME;
-    export DB_USER_PASSWORD=$SPAR_CORE_DB_PASSWORD;
+    export DB_HOST=$SPAR_SELFSERVICE_DB_HOSTNAME;
+    export DB_USER=$SPAR_SELFSERVICE_DB_USERNAME;
+    export DB_USER_PASSWORD=$SPAR_SELFSERVICE_DB_PASSWORD;
     git_repo_name="$(basename "$GIT_REPO_URL" .git)";
     git clone --depth 1 --branch $GIT_BRANCH $GIT_REPO_URL &&
     cd $git_repo_name/db_scripts &&
