@@ -53,7 +53,7 @@ jobs:
         fi
 
         shopt -s nocasematch
-        if [[ '${{ github.repository_owner }}' == 'OpenG2P' ]]; then
+        if [[ '${{ github.repository_owner }}' != 'OpenG2P' ]]; then
           echo "SKIP=TRUE" >> $GITHUB_ENV
         fi
     - name: Upload tar as Artifact
