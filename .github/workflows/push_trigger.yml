@@ -51,7 +51,7 @@ jobs:
           done < charts-list.txt
           rm charts-list.txt
         fi
-        
+
         shopt -s nocasematch
         if [[ '${{ github.repository_owner }}' == 'OpenG2P' ]]; then
           echo "SKIP=TRUE" >> $GITHUB_ENV
@@ -68,7 +68,7 @@ jobs:
       with:
           repository: 'openg2p/openg2p-helm'
           ref: gh-pages
-          token: ${{ secrets.OPENG2P_BOT_PAT }}
+          token: ${{ secrets.OPENG2P_BOT_GITHUB_PAT }}
       if: env.SKIP != 'TRUE'
 
     - name: Download tar from Artifacts
@@ -91,6 +91,6 @@ jobs:
         author_name: openg2pbot
         author_email: bot@openg2p.org
         default_author: user_info
-        message: 'added spar helm charts for publish ${{ github.event.inputs.git-ref }}'
+        message: 'added spar helm charts for publish openg2p/openg2p-spar-deployment@${{ github.sha }}'
         add: './*.tgz ./index.yaml'
       if: env.SKIP != 'TRUE'
