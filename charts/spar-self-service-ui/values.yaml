@@ -11,7 +11,10 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-envVars: {}
+envVars:
+  NEXT_PUBLIC_BASE_PATH: /selfservice
+  NEXT_PUBLIC_BASE_API_PATH: /selfservice/api
+
 envVarsFrom: {}
 
 containerPort: 3000
@@ -107,7 +110,7 @@ istio:
   virtualservice:
     enabled: true
     host: ""
-    gateway: "istio-system/all-hosts"
+    gateway: "all-hosts"
     prefix: "/selfservice"
     rewriteUri: ""
     api:

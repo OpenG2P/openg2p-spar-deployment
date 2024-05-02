@@ -124,7 +124,7 @@ istio:
   virtualservice:
     enabled: true
     host: ""
-    gateway: "istio-system/all-hosts"
+    gateway: "all-hosts"
     prefix: "/mapper/api/"
     rewriteUri: "/"
   gateway:
