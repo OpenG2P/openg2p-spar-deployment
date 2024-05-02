@@ -12,7 +12,6 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-
 envVars:
   SPAR_MAPPER_DB_HOSTNAME: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
   SPAR_MAPPER_DB_USERNAME: "sparuser"

@@ -98,7 +98,6 @@ updateStrategy:
 command: []
 args: []
 
-
 postgresCheckerInit:
   enabled: true
   image: jbergknoff/postgresql-client
