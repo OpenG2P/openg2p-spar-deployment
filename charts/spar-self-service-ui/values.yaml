@@ -13,7 +13,7 @@ fullnameOverride: ""
 
 envVars:
   NEXT_PUBLIC_BASE_PATH: /selfservice
-  NEXT_PUBLIC_BASE_API_PATH: /selfservice/api
+  NEXT_PUBLIC_BASE_API_PATH: /api/selfservice
 
 envVarsFrom: {}
 
@@ -61,7 +61,6 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-
 podAnnotations: {}
 
 podSecurityContext: {}
@@ -91,15 +90,12 @@ ingress:
   enabled: false
   className: ""
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
     kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
     - host: ""
       paths:
-        - path: (/)(selfservice.*)
-          pathType: ImplementationSpecific
-        - path: /selfservice/api(/|$)(.*)
+        - path: /selfservice
           pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls
@@ -114,12 +110,7 @@ istio:
     gateway: "all-hosts"
     prefix: "/selfservice"
     rewriteUri: ""
-    api:
-      enabled: false
-      prefix: "/selfservice/api/"
-      rewriteUri: "/"
-      serviceName: "spar-selfservice-api"
-      servicePort: 80
+    redirectToSelfServiceEnabled: true
   gateway:
     enabled: false
     host: ""

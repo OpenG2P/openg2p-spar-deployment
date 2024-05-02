@@ -32,21 +32,12 @@ spec:
         host: {{ include "selfserviceUi.fullname" . }}
         port:
           number: {{ .Values.service.port }}
-  {{- with .Values.istio.virtualservice.api }}
-  {{- if .enabled }}
+  {{- if .Values.istio.virtualservice.redirectToSelfServiceEnabled }}
   - match:
     - uri:
-        prefix: {{ .prefix }}
-    {{- if .rewriteUri }}
-    rewrite:
-      uri: {{ .rewriteUri }}
-    {{- end }}
-    route:
-    - destination:
-        host: {{ tpl .serviceName $ }}
-        port:
-          number: {{ .servicePort }}
-  {{- end }}
+        prefix: "/"
+    redirect:
+      uri: {{ .Values.istio.virtualservice.prefix }}
   {{- end }}
 {{- end }}
 {{- end }}
