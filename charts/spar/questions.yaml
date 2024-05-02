@@ -19,3 +19,7 @@ questions:
   description: Install self-service portal frontend
   type: boolean
   label: "SPAR Self Service UI" 
+- variable: global.esignetBaseUrl
+  description: Base URL of eSignet. SPAR will considered this esignet as valid Authenticator.
+  type: string
+  label: eSignet Base URL
