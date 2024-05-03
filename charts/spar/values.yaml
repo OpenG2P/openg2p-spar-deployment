@@ -38,5 +38,6 @@ spar-self-service-api:
       secretKeyRef:
         name: '{{ .Release.Name }}-postgresql'
 
+
 spar-self-service-ui:
   enabled: true
