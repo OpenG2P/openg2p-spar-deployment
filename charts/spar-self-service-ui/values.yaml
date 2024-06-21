@@ -1,5 +1,5 @@
 global:
-  hostname: spar.openg2p.sandbox.net
+  sparHostname: spar.openg2p.sandbox.net
 
 replicaCount: 1
 image:
@@ -11,7 +11,10 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-envVars: {}
+envVars:
+  NEXT_PUBLIC_BASE_PATH: /selfservice
+  NEXT_PUBLIC_BASE_API_PATH: /api/selfservice
+
 envVarsFrom: {}
 
 containerPort: 3000
@@ -34,7 +37,7 @@ autoscaling:
 
 readinessProbe:
   httpGet:
-    path: /
+    path: /selfservice
     port: 3000
   failureThreshold: 20
   periodSeconds: 30
@@ -43,7 +46,7 @@ readinessProbe:
 
 livenessProbe:
   httpGet:
-    path: /
+    path: /selfservice
     port: 3000
   initialDelaySeconds: 15
   periodSeconds: 60
@@ -58,12 +61,13 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-podAnnotations: {}
+podAnnotations:
+  helm.sh/revision: '{{ .Release.Revision }}'
 
 podSecurityContext: {}
   # fsGroup: 2000
 
-securityContext: {}
+containerSecurityContext: {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -87,20 +91,18 @@ ingress:
   enabled: false
   className: ""
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
     kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
     - host: ""
       paths:
-        - path: (/)(selfservice.*)
-          pathType: ImplementationSpecific
-        - path: /selfservice/api(/|$)(.*)
+        - path: /selfservice
           pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
+
 
 istio:
   enabled: true
@@ -108,21 +110,18 @@ istio:
     enabled: true
     host: ""
     gateway: "internal"
-    prefix: "/selfservice"
+    destination: '{{ include "selfserviceUi.fullname" . }}'
+    destinationPort: '{{ .Values.service.port }}'
+    prefix: /selfservice
     rewriteUri: ""
-    api:
-      enabled: false
-      prefix: "/selfservice/api/"
-      rewriteUri: "/"
-      serviceName: "spar-selfservice-api"
-      servicePort: 80
   gateway:
     enabled: false
     host: ""
     ingressController:
       istio: ingressgateway
     httpTlsRedirect: true
+    httpEnabled: true
+    httpsEnabled: false
     tls:
-      enabled: true
       mode: SIMPLE
       credentialName: ""

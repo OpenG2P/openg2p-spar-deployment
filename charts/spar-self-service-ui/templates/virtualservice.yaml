@@ -8,45 +8,28 @@ metadata:
     {{- include "selfserviceUi.labels" . | nindent 4 }}
 spec:
   hosts:
-  {{- if .Values.istio.virtualservice.host }}
-  - {{ .Values.istio.virtualservice.host }}
-  {{- else }}
-  - {{ .Values.global.hostname }}
-  {{- end }}
+  - {{ default .Values.global.sparHostname .Values.istio.virtualservice.host | quote }}
   gateways:
-    {{- if not .Values.istio.virtualservice.gateway }}
-    - {{ include "openg2p.fullname" . }}
-    {{- else }}
-    - {{ .Values.istio.virtualservice.gateway }}
-    {{- end }}
+  - {{ default (include "selfserviceUi.fullname" .) .Values.istio.virtualservice.gateway }}
   http:
   - match:
     - uri:
-        prefix: {{ .Values.istio.virtualservice.prefix }}
+        prefix: {{ tpl .Values.istio.virtualservice.prefix $ }}
     {{- if .Values.istio.virtualservice.rewriteUri }}
     rewrite:
-      uri: {{ .Values.istio.virtualservice.rewriteUri }}
+      uri: {{ tpl .Values.istio.virtualservice.rewriteUri $ }}
     {{- end }}
     route:
     - destination:
-        host: {{ include "selfserviceUi.fullname" . }}
+        host: {{ tpl .Values.istio.virtualservice.destination $ }}
         port:
-          number: {{ .Values.service.port }}
-  {{- with .Values.istio.virtualservice.api }}
-  {{- if .enabled }}
+          number: {{ tpl .Values.istio.virtualservice.destinationPort $ }}
+  {{- if .Values.istio.virtualservice.redirectToSelfServiceEnabled }}
   - match:
     - uri:
-        prefix: {{ .prefix }}
-    {{- if .rewriteUri }}
-    rewrite:
-      uri: {{ .rewriteUri }}
-    {{- end }}
-    route:
-    - destination:
-        host: {{ tpl .serviceName $ }}
-        port:
-          number: {{ .servicePort }}
-  {{- end }}
+        prefix: "/"
+    redirect:
+      uri: {{ .Values.istio.virtualservice.prefix }}
   {{- end }}
 {{- end }}
 {{- end }}

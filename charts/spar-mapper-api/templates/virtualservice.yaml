@@ -8,29 +8,21 @@ metadata:
     {{- include "mapper.labels" . | nindent 4 }}
 spec:
   hosts:
-  {{- if .Values.istio.virtualservice.host }}
-  - {{ .Values.istio.virtualservice.host }}
-  {{- else }}
-  - {{ .Values.global.hostname }}
-  {{- end }}
+  - {{ default .Values.global.sparHostname .Values.istio.virtualservice.host | quote }}
   gateways:
-    {{- if not .Values.istio.virtualservice.gateway }}
-    - {{ include "openg2p.fullname" . }}
-    {{- else }}
-    - {{ .Values.istio.virtualservice.gateway }}
-    {{- end }}
+  - {{ default (include "mapper.fullname" .) .Values.istio.virtualservice.gateway }}
   http:
   - match:
     - uri:
-        prefix: {{ .Values.istio.virtualservice.prefix }}
+        prefix: {{ tpl .Values.istio.virtualservice.prefix $ }}
     {{- if .Values.istio.virtualservice.rewriteUri }}
     rewrite:
-      uri: {{ .Values.istio.virtualservice.rewriteUri }}
+      uri: {{ tpl .Values.istio.virtualservice.rewriteUri $ }}
     {{- end }}
     route:
     - destination:
-        host: {{ include "mapper.fullname" . }}
+        host: {{ tpl .Values.istio.virtualservice.destination $ }}
         port:
-          number: {{ .Values.service.port }}
+          number: {{ tpl .Values.istio.virtualservice.destinationPort $ }}
 {{- end }}
 {{- end }}

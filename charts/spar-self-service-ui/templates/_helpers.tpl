@@ -61,25 +61,33 @@ Create the name of the service account to use
 {{- end }}
 {{- end }}
 
+{{- define "selfserviceUi.tpl" -}}
+{{- $value := typeIs "string" .value | ternary .value (.value | toYaml) }}
+{{- if contains "{{" (toJson .value) }}
+  {{- tpl $value .context }}
+{{- else }}
+    {{- $value }}
+{{- end }}
+{{- end -}}
+
 {{/*
 Render Env values section
 */}}
+{{- define "selfserviceUi.baseEnvVars" -}}
+{{- $context := .context -}}
+{{- range $k, $v := .envVars }}
+- name: {{ $k }}
+{{- if or (kindIs "int64" $v) (kindIs "float64" $v) (kindIs "bool" $v) }}
+  value: {{ $v | quote }}
+{{- else if kindIs "string" $v }}
+  value: {{ include "selfserviceUi.tpl" (dict "value" $v "context" $context) | squote }}
+{{- else }}
+  valueFrom: {{- include "selfserviceUi.tpl" (dict "value" $v "context" $context) | nindent 4}}
+{{- end }}
+{{- end }}
+{{- end -}}
+
 {{- define "selfserviceUi.envVars" -}}
-{{- range $k, $v := .Values.envVars }}
-- name: {{ $k }}
-  value: {{ tpl $v $ | quote }}
-{{- end }}
-{{- range $k, $v := .Values.envVarsFrom }}
-- name: {{ $k }}
-  valueFrom:
-    {{- if $v.configMapKeyRef }}
-    configMapKeyRef:
-      name: {{ tpl $v.configMapKeyRef.name $ | quote }}
-      key: {{ tpl $v.configMapKeyRef.key $ | quote }}
-    {{- else if $v.secretKeyRef }}
-    secretKeyRef:
-      name: {{ tpl $v.secretKeyRef.name $ | quote }}
-      key: {{ tpl $v.secretKeyRef.key $ | quote }}
-    {{- end }}
-{{- end }}
-{{- end }}
+{{- $envVars := merge (deepCopy .Values.envVars) (deepCopy .Values.envVarsFrom) -}}
+{{- include "selfserviceUi.baseEnvVars" (dict "envVars" $envVars "context" $) }}
+{{- end -}}

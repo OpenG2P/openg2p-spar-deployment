@@ -8,35 +8,29 @@ metadata:
     {{- include "selfservice.labels" . | nindent 4 }}
 spec:
   selector:
-    {{ toYaml .Values.istio.gateway.ingressController | nindent 4 }}
+    {{- toYaml .Values.istio.gateway.ingressController | nindent 4 }}
   servers:
+  {{- if .Values.istio.gateway.httpEnabled }}
   - port:
-      number: 80
-      name: http
-      protocol: HTTP
+      name: http2
+      number: 8080
+      protocol: HTTP2
     hosts:
-      {{- if .Values.istio.gateway.host }}
-      - {{ .Values.istio.gateway.host }}
-      {{- else }}
-      - {{ .Values.global.hostname }}
-      {{- end }}
+      - {{ default .Values.global.sparHostname .Values.istio.gateway.host | quote }}
     {{- if .Values.istio.gateway.httpTlsRedirect }}
     tls:
       httpsRedirect: true
     {{- end }}
+  {{- end }}
+  {{- if .Values.istio.gateway.httpsEnabled }}
   - port:
-      number: 443
       name: https
+      number: 8443
       protocol: HTTPS
     hosts:
-      {{- if .Values.istio.gateway.host }}
-      - {{ .Values.istio.gateway.host }}
-      {{- else }}
-      - {{ .Values.global.hostname }}
-      {{- end }}
-    {{- if .Values.istio.gateway.tls.enabled }}
+      - {{ default .Values.global.sparHostname .Values.istio.gateway.host | quote }}
     tls:
       {{ toYaml (omit .Values.istio.gateway.tls "enabled") | nindent 6 }}
-    {{- end }}
+  {{- end }}
 {{- end }}
 {{- end }}

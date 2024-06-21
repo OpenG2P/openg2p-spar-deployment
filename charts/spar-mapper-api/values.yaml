@@ -1,5 +1,5 @@
 global:
-  hostname: spar.sandbox.openg2p.net
+  sparHostname: spar.sandbox.openg2p.net
 
 replicaCount: 1
 image:
@@ -16,7 +16,7 @@ envVars:
   SPAR_MAPPER_DB_HOSTNAME: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
   SPAR_MAPPER_DB_USERNAME: "sparuser"
   SPAR_MAPPER_DB_DBNAME: "spardb"
-  SPAR_MAPPER_OPENAPI_ROOT_PATH: "/mapper/api"
+  SPAR_MAPPER_OPENAPI_ROOT_PATH: "/api/mapper"
 
 envVarsFrom:
   SPAR_MAPPER_DB_PASSWORD:
@@ -68,12 +68,13 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-podAnnotations: {}
+podAnnotations:
+  helm.sh/revision: '{{ .Release.Revision }}'
 
 podSecurityContext: {}
   # fsGroup: 2000
 
-securityContext: {}
+containerSecurityContext: {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -111,7 +112,7 @@ ingress:
   hosts:
     - host: ""
       paths:
-        - path: /mapper/api(/|$)(.*)
+        - path: /api/mapper(/|$)(.*)
           pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls
@@ -124,7 +125,9 @@ istio:
     enabled: true
     host: ""
     gateway: "internal"
-    prefix: "/mapper/api/"
+    destination: '{{ include "mapper.fullname" . }}'
+    destinationPort: '{{ .Values.service.port }}'
+    prefix: /api/mapper/
     rewriteUri: "/"
   gateway:
     enabled: false
@@ -132,8 +135,9 @@ istio:
     ingressController:
       istio: ingressgateway
     httpTlsRedirect: true
+    httpEnabled: true
+    httpsEnabled: false
     tls:
-      enabled: true
       mode: SIMPLE
       credentialName: ""
 
