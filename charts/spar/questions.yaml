@@ -2,23 +2,23 @@ questions:
 - variable: global.hostname
   default: spar.sandbox.openg2p.net
   description: Hostname under which all SPAR services will be accessed
-  type: string 
+  type: string
   label: "Global Hostname"
 - variable: spar-mapper-api.enabled
   default: true
   description: Install SPAR Mapper
   type: boolean
-  label: "SPAR Mapper" 
+  label: "SPAR Mapper"
 - variable: spar-self-service-api.enabled
   default: true
-  description: Install self-service portal backend 
+  description: Install self-service portal backend
   type: boolean
-  label: "SPAR Self Service API" 
+  label: "SPAR Self Service API"
 - variable: spar-self-service-ui.enabled
   default: true
   description: Install self-service portal frontend
   type: boolean
-  label: "SPAR Self Service UI" 
+  label: "SPAR Self Service UI"
 - variable: global.esignetBaseUrl
   description: Base URL of eSignet. SPAR will considered this esignet as valid Authenticator.
   type: string

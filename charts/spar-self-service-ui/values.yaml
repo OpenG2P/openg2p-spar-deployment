@@ -107,7 +107,7 @@ istio:
   virtualservice:
     enabled: true
     host: ""
-    gateway: "istio-system/all-hosts"
+    gateway: "internal"
     prefix: "/selfservice"
     rewriteUri: ""
     api:
