@@ -16,10 +16,8 @@ spec:
       {{- include "selfservice.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
-      annotations:
-        helm.sh/revision: {{- .Release.Revision }}
-        {{- toYaml . | nindent 8 }}
+      {{- if .Values.podAnnotations }}
+      annotations: {{- include "selfservice.tpl" (dict "value" .Values.podAnnotations "context" $) | nindent 8 }}
       {{- end }}
       labels:
         {{- include "selfservice.selectorLabels" . | nindent 8 }}
@@ -29,8 +27,10 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "selfservice.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -49,21 +49,21 @@ spec:
           image: {{ .Values.postgresCheckerInit.image }}
           command:
             {{- toYaml .Values.postgresCheckerInit.command | nindent 12 }}
-          env:
-            {{ include "selfservice.envVars" . | nindent 12 }}
+          env: {{- include "selfservice.envVars" . | nindent 12 }}
         {{- end }}
       containers:
         - name: {{ .Chart.Name }}
+          {{- with .Values.containerSecurityContext }}
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
               containerPort: {{ .Values.containerPort }}
               protocol: TCP
-          env: 
-            {{ include "selfservice.envVars" . | nindent 12 }}
+          env: {{- include "selfservice.envVars" . | nindent 12 }}
           {{- with .Values.command }}
           command:
             {{- toYaml . | nindent 12 }}
@@ -73,11 +73,11 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- with .Values.readinessProbe }}
-          readinessProbe: 
+          readinessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- with .Values.livenessProbe }}
-          livenessProbe: 
+          livenessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- with .Values.resources }}

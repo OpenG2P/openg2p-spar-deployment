@@ -1,1 +1,1 @@
-OpenG2P SPAR installation using Rancher. 
+OpenG2P SPAR installation using Rancher.

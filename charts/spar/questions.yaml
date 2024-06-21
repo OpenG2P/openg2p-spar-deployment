@@ -1,25 +1,113 @@
 questions:
-- variable: global.hostname
-  default: spar.sandbox.openg2p.net
+- variable: global.sparHostname
   description: Hostname under which all SPAR services will be accessed
-  type: string 
-  label: "Global Hostname"
+  type: string
+  label: SPAR Hostname
+
 - variable: spar-mapper-api.enabled
-  default: true
   description: Install SPAR Mapper
   type: boolean
-  label: "SPAR Mapper" 
+  label: SPAR Mapper
+
 - variable: spar-self-service-api.enabled
-  default: true
-  description: Install self-service portal backend 
+  description: Install self-service portal backend
   type: boolean
-  label: "SPAR Self Service API" 
+  label: SPAR Self Service API
+
 - variable: spar-self-service-ui.enabled
-  default: true
   description: Install self-service portal frontend
   type: boolean
-  label: "SPAR Self Service UI" 
+  label: SPAR Self Service UI
+
+- variable: keymanager.enabled
+  description: This installs Keymanager for managing Keys for Encrpytion and Signatures
+  type: boolean
+  label: Install Keymanager?
+
 - variable: global.esignetBaseUrl
   description: Base URL of eSignet. SPAR will considered this esignet as valid Authenticator.
   type: string
   label: eSignet Base URL
+
+- variable: global.keycloakBaseUrl
+  description: Keycloak Base Url. Used for authentication of some API
+  type: string
+  label: Keycloak Base URL
+
+- variable: global.sparAuthClientId
+  description: OIDC Client ID for PBMS
+  type: string
+  label: OIDC Client ID
+
+- variable: global.sparAuthClientSecret
+  description: OIDC Client Secret for PBMS
+  type: string
+  label: OIDC Client Secret
+
+# Keymanager
+- variable: global.sparKeymanagerInstallationName
+  description: |-
+    Edit this only if you want to reuse existing Keymanager Installation.
+    Else enable Keymanager Installation from "General Settings".
+  type: reference_service
+  label: Existing Keymanager Installation Name
+  group: Keymanager Settings
+  show_if: "keymanager.enabled=false"
+
+- variable: global.keymanagerHostname
+  description: Hostname under which Keymanager should be accessible
+  type: string
+  label: Keymanager Hostname
+  group: Keymanager Settings
+
+- variable: keymanager.springConfig.profile
+  type: string
+  label: Spring Config Profile
+  group: Keymanager Settings
+  show_if: "keymanager.enabled=true"
+
+- variable: keymanager.springConfig.names
+  type: string
+  label: Spring Config Names
+  group: Keymanager Settings
+  show_if: "keymanager.enabled=true"
+
+- variable: keymanager.springConfig.gitRepo.enabled
+  description: Enables download of configs from Git repo.
+  type: boolean
+  label: Spring Config Git Enabled
+  group: Keymanager Settings
+  show_if: "keymanager.enabled=true"
+  show_subquestion_if: true
+  subquestions:
+  - variable: keymanager.springConfig.gitRepo.repoUrl
+    description: |-
+      Repo Url for remote Git repo containing configs.
+      This url should include username password if required.
+    type: string
+    label: Spring Config Git Repo Url
+    group: Keymanager Settings
+
+  - variable: keymanager.springConfig.gitRepo.branch
+    description: Branch of remote Git repo containing configs.
+    type: string
+    label: Spring Config Git Repo Branch
+    group: Keymanager Settings
+
+- variable: keymanager.springConfig.rawConfig
+  description: |-
+    If git-based config is disabled, the complete application.properties can be
+    directly supplied here.
+  type: multiline
+  label: Spring Config application properties.
+  group: Keymanager Settings
+  show_if: "keymanager.enabled=true&&keymanager.springConfig.gitRepo.enabled=false"
+
+- variable: keymanager.envVars.auth_server_admin_allowed_audience
+  description: |-
+    List of Keycloak Client ID allowed to call this keymanager's APIs.
+    Do not edit this parameter unless required.
+  type: string
+  label: Allowed Keycloak Client IDs.
+  group: Keymanager Advanced Settings
+  show_if: "keymanager.enabled=true"

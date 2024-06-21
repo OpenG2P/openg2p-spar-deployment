@@ -17,8 +17,7 @@ spec:
         - name: postgres-init
           image: {{ .Values.postgresInit.image }}
           imagePullPolicy: {{ .Values.postgresInit.imagePullPolicy }}
-          env:
-          {{ include "selfservice.envVars" . | nindent 10 }}
-          {{ include "selfservice.postgresInitEnvVars" . | nindent 10 }}
-          command: {{ toYaml .Values.postgresInit.command | nindent 10 }}
+          env: {{- include "selfservice.envVars" . | nindent 12 }}
+            {{- include "selfservice.postgresInitEnvVars" . | nindent 12 }}
+          command: {{- toYaml .Values.postgresInit.command | nindent 12 }}
 {{- end }}

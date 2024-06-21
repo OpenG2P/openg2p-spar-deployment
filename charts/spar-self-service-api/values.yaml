@@ -1,5 +1,5 @@
 global:
-  hostname: spar.openg2p.sandbox.net
+  sparHostname: spar.openg2p.sandbox.net
 
 replicaCount: 1
 image:
@@ -15,7 +15,7 @@ envVars:
   SPAR_SELFSERVICE_DB_HOSTNAME: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
   SPAR_SELFSERVICE_DB_USERNAME: "sparuser"
   SPAR_SELFSERVICE_DB_DBNAME: "spardb"
-  SPAR_SELFSERVICE_OPENAPI_ROOT_PATH: "/selfservice/api"
+  SPAR_SELFSERVICE_OPENAPI_ROOT_PATH: "/api/selfservice"
   SPAR_SELFSERVICE_DEFAULT_ID_TOKEN_VERIFY_AT_HASH: "false"
 
   SPAR_SELFSERVICE_AUTH_DEFAULT_ISSUERS: '["https://esignet.openg2p.sandbox.net/v1/esignet","https://keycloak.openg2p.sandbox.net/realms/openg2p"]'
@@ -73,12 +73,13 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-podAnnotations: {}
+podAnnotations:
+  helm.sh/revision: '{{ .Release.Revision }}'
 
 podSecurityContext: {}
   # fsGroup: 2000
 
-securityContext: {}
+containerSecurityContext: {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -116,7 +117,7 @@ ingress:
   hosts:
     - host: ""
       paths:
-        - path: /selfservice/api(/|$)(.*)
+        - path: /api/selfservice(/|$)(.*)
           pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls
@@ -128,8 +129,10 @@ istio:
   virtualservice:
     enabled: true
     host: ""
-    gateway: "istio-system/all-hosts"
-    prefix: "/selfservice/api/"
+    gateway: "internal"
+    destination: '{{ include "selfservice.fullname" . }}'
+    destinationPort: '{{ .Values.service.port }}'
+    prefix: /api/selfservice/
     rewriteUri: "/"
   gateway:
     enabled: false
@@ -137,8 +140,9 @@ istio:
     ingressController:
       istio: ingressgateway
     httpTlsRedirect: true
+    httpEnabled: true
+    httpsEnabled: false
     tls:
-      enabled: true
       mode: SIMPLE
       credentialName: ""
 
@@ -152,6 +156,7 @@ postgresql:
       wal_level = logical
       max_wal_senders = 20
       max_replication_slots = 10
+
 
 postgresInit:
   enabled: true
@@ -170,9 +175,9 @@ postgresInit:
   - >-
     sleep $WAIT_BEFORE_STARTUP;
     apk --no-cache add bash gettext git;
-    export DB_HOST=$SPAR_CORE_DB_HOSTNAME;
-    export DB_USER=$SPAR_CORE_DB_USERNAME;
-    export DB_USER_PASSWORD=$SPAR_CORE_DB_PASSWORD;
+    export DB_HOST=$SPAR_SELFSERVICE_DB_HOSTNAME;
+    export DB_USER=$SPAR_SELFSERVICE_DB_USERNAME;
+    export DB_USER_PASSWORD=$SPAR_SELFSERVICE_DB_PASSWORD;
     git_repo_name="$(basename "$GIT_REPO_URL" .git)";
     git clone --depth 1 --branch $GIT_BRANCH $GIT_REPO_URL &&
     cd $git_repo_name/db_scripts &&
