@@ -1,10 +1,3 @@
-## SPAR Mapper API Deployment
+# SPAR Mapper API Helm Chart
 
-### How to deploy
-
-```bash
-cd spar-mapper-api/scripts
-```
-```bash
-SPAR_HOSTNAME=mapper.dev.openg2p.net SANDBOX_HOSTNAME=dev.openg2p.net ./install.sh
-```
+Helm Chart of SPAR Self Service API Component
