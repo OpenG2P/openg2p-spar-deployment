@@ -1,12 +1,10 @@
 global:
   sparHostname: spar.sandbox.openg2p.net
 
-  keymanagerHostname: keymanager.openg2p.sandbox.net
-
-  esignetBaseUrl: https://esignet.sandbox.openg2p.net
-
   sparAuthClientId: 'openg2p-spar'
   sparAuthClientSecret: ''
+
+  esignetBaseUrl: https://esignet.sandbox.openg2p.net
 
   keycloakBaseUrl: https://keycloak.openg2p.sandbox.net
   keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
@@ -80,6 +78,7 @@ spar-self-service-ui:
 
 keymanager:
   enabled: true
+  hostname: keymanager-spar.openg2p.sandbox.net
   springConfig:
     names: application,kernel
     profile: default

@@ -54,11 +54,12 @@ questions:
   group: Keymanager Settings
   show_if: "keymanager.enabled=false"
 
-- variable: global.keymanagerHostname
+- variable: keymanager.hostname
   description: Hostname under which Keymanager should be accessible
   type: string
   label: Keymanager Hostname
   group: Keymanager Settings
+  show_if: "keymanager.enabled=true"
 
 - variable: keymanager.springConfig.profile
   type: string
