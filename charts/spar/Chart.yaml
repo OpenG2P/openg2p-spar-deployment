@@ -15,7 +15,7 @@ dependencies:
   version: 1.1.0
   condition: spar-self-service-api.enabled
 - name: spar-self-service-ui
-  version: 1.1.0
+  version: 1.0.0
   condition: spar-self-service-ui.enabled
 - name: keymanager
   version: 12.0.1
