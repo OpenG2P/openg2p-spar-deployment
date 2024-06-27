@@ -8,6 +8,8 @@ on:
       - 1.*
       - develop
       - main
+  workflow_dispatch:
+
 
 jobs:
   generate-charts:
