@@ -2,7 +2,7 @@ apiVersion: v2
 name: spar-self-service-api
 description: A Helm chart for OpenG2P SPAR Self Service API
 type: application
-version: 0.0.0-develop
+version: 1.1.0
 dependencies:
 - name: postgresql
   repository: oci://registry-1.docker.io/bitnamicharts
