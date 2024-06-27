@@ -8,7 +8,6 @@ global:
 
   keycloakBaseUrl: https://keycloak.openg2p.sandbox.net
   keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
-
   sparKeymanagerInstallationName: '{{ .Release.Name }}-keymanager'
 
 postgresql:
@@ -52,7 +51,6 @@ spar-mapper-api:
     # TODO: Convert these to be stored in secret
     SPAR_MAPPER_OAUTH_CLIENT_ID: '{{ tpl .Values.global.sparAuthClientId $ }}'
     SPAR_MAPPER_OAUTH_CLIENT_SECRET: '{{ tpl .Values.global.sparAuthClientSecret $ }}'
-
     SPAR_MAPPER_JWT_VERIFY_URL: 'http://{{ tpl .Values.global.sparKeymanagerInstallationName $ }}/v1/keymanager/jwtVerify'
   envVarsFrom:
     SPAR_MAPPER_DB_PASSWORD:
