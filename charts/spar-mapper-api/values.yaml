@@ -6,7 +6,7 @@ image:
   repository: openg2p/openg2p-spar-mapper-api
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "develop"
+  tag: "1.1.0"
 
 imagePullSecrets: []
 nameOverride: ""
