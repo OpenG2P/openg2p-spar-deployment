@@ -182,3 +182,7 @@ postgresInit:
     git clone --depth 1 --branch $GIT_BRANCH $GIT_REPO_URL &&
     cd $git_repo_name/db_scripts &&
     ./deploy.sh
+  hookAnnotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation
