@@ -72,6 +72,9 @@ spar-self-service-api:
     SPAR_SELFSERVICE_DB_PASSWORD:
       secretKeyRef:
         name: '{{ .Release.Name }}-postgresql'
+  postgresInit:
+    hookAnnotations:
+      "helm.sh/hook-weight": "0"
 
 spar-self-service-ui:
   enabled: true
