@@ -70,9 +70,13 @@ spar-self-service-api:
     SPAR_SELFSERVICE_DB_PASSWORD:
       secretKeyRef:
         name: '{{ .Release.Name }}-postgresql'
+  postgresInit:
+    hookAnnotations:
+      "helm.sh/hook-weight": "0"
 
 spar-self-service-ui:
   enabled: true
+
 
 keymanager:
   enabled: true
@@ -87,3 +91,9 @@ keymanager:
     rawConfig: ""
   envVars:
     auth_server_admin_allowed_audience: 'openg2p-sr,openg2p-sr-{{ .Release.Namespace }},openg2p-pbms,openg2p-pbms-{{ .Release.Namespace }},openg2p-spar-{{ .Release.Namespace }}'
+  postgresInit:
+    commonAnnotations:
+      "helm.sh/hook-weight": "0"
+  keygen:
+    commonAnnotations:
+      "helm.sh/hook-weight": "1"
