@@ -79,6 +79,7 @@ spar-self-service-api:
 spar-self-service-ui:
   enabled: true
 
+
 keymanager:
   enabled: true
   hostname: keymanager-spar.openg2p.sandbox.net
