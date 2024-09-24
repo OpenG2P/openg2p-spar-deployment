@@ -18,8 +18,8 @@ envVars:
   SPAR_SELFSERVICE_OPENAPI_ROOT_PATH: "/api/selfservice"
   SPAR_SELFSERVICE_DEFAULT_ID_TOKEN_VERIFY_AT_HASH: "false"
 
-  SPAR_SELFSERVICE_AUTH_DEFAULT_ISSUERS: '["https://esignet.openg2p.sandbox.net/v1/esignet","https://keycloak.openg2p.sandbox.net/realms/openg2p"]'
-  SPAR_SELFSERVICE_AUTH_DEFAULT_JWKS_URLS: '["https://esignet.openg2p.sandbox.net/v1/esignet/oauth/.well-known/jwks.json","https://keycloak.openg2p.sandbox.net/realms/openg2p/protocol/openid-connect/certs"]'
+  SPAR_SELFSERVICE_AUTH_DEFAULT_ISSUERS: '["https://esignet.openg2p.sandbox.net","https://keycloak.openg2p.sandbox.net/realms/master"]'
+  SPAR_SELFSERVICE_AUTH_DEFAULT_JWKS_URLS: '["https://esignet.openg2p.sandbox.net/.well-known/jwks.json","https://keycloak.openg2p.sandbox.net/realms/master/protocol/openid-connect/certs"]'
 
   SPAR_SELFSERVICE_MAPPER_API_URL: 'http://mapper/sync'
 
