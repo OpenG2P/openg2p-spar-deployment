@@ -15,7 +15,13 @@ postgresql:
   auth:
     username: sparuser
     database: spardb
+  additionalDbs:
+    enabled: true
+    userPasswordsExistingSecret: ""
+    userPasswords:
+      keymgruser: ""
   primary:
+    resourcesPreset: "small"
     extendedConfiguration: |-
       wal_level = logical
       max_wal_senders = 20
@@ -47,11 +53,13 @@ spar-mapper-api:
     enabled: false
   envVars:
     SPAR_MAPPER_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
-    SPAR_MAPPER_OAUTH_TOKEN_URL: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/protocol/openid-connect/token'
+
     # TODO: Convert these to be stored in secret
-    SPAR_MAPPER_OAUTH_CLIENT_ID: '{{ tpl .Values.global.sparAuthClientId $ }}'
-    SPAR_MAPPER_OAUTH_CLIENT_SECRET: '{{ tpl .Values.global.sparAuthClientSecret $ }}'
-    SPAR_MAPPER_JWT_VERIFY_URL: 'http://{{ tpl .Values.global.sparKeymanagerInstallationName $ }}/v1/keymanager/jwtVerify'
+    SPAR_MAPPER_KEYMANAGER_API_BASE_URL: "http://{{ tpl .Values.global.sparKeymanagerInstallationName $ }}/v1/keymanager"
+    SPAR_MAPPER_KEYMANAGER_AUTH_URL: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/protocol/openid-connect/token'
+    SPAR_MAPPER_KEYMANAGER_AUTH_CLIENT_ID: '{{ tpl .Values.global.sparAuthClientId $ }}'
+    SPAR_MAPPER_KEYMANAGER_AUTH_CLIENT_SECRET: '{{ tpl .Values.global.sparAuthClientSecret $ }}'
+
   envVarsFrom:
     SPAR_MAPPER_DB_PASSWORD:
       secretKeyRef:
@@ -74,9 +82,22 @@ spar-self-service-api:
 spar-self-service-ui:
   enabled: true
 
+artifactory:
+  enabled: true
+  image:
+    repository: mosipid/artifactory-server
+    tag: 1.4.1-ES
+  resources: {}
+
+softhsm:
+  enabled: true
+  # Hardcoding this for now. else every upgrade will reset the pin
+  securityPIN: MzQwNTM0OTk=
+  resources: {}
+
 keymanager:
   enabled: true
-  hostname: keymanager-spar.openg2p.sandbox.net
+  hostname: '{{ tpl .Values.global.sparHostname $ }}'
   springConfig:
     names: application,kernel
     profile: default
@@ -86,4 +107,22 @@ keymanager:
       branch: master
     rawConfig: ""
   envVars:
-    auth_server_admin_allowed_audience: 'openg2p-sr,openg2p-sr-{{ .Release.Namespace }},openg2p-pbms,openg2p-pbms-{{ .Release.Namespace }},openg2p-spar-{{ .Release.Namespace }}'
+    mosip_kernel_keymanager_autogen_appids_list: ROOT,SPAR
+    mosip_kernel_keymanager_autogen_basekeys_list: 'SPAR:ENCRYPT'
+    auth_server_admin_allowed_audience: 'openg2p-spar,openg2p-spar-{{ .Release.Namespace }}'
+  envVarsFrom:
+    db_dbuser_password:
+      secretKeyRef:
+        name: '{{ .Release.Name }}-postgresql-addl-user-passwords'
+        key: keymgruser
+  postgresInit:
+    commonAnnotations:
+      "helm.sh/hook-weight": "0"
+    envVarsFrom:
+      DBUSER_PWD:
+        secretKeyRef:
+          name: '{{ .Release.Name }}-postgresql-addl-user-passwords'
+          key: keymgruser
+  keygen:
+    commonAnnotations:
+      "helm.sh/hook-weight": "1"
