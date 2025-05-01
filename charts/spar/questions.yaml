@@ -19,11 +19,6 @@ questions:
   type: boolean
   label: SPAR Self Service UI
 
-- variable: keymanager.enabled
-  description: This installs Keymanager for managing Keys for Encrpytion and Signatures
-  type: boolean
-  label: Install Keymanager?
-
 - variable: global.esignetBaseUrl
   description: Base URL of eSignet. SPAR will considered this esignet as valid Authenticator.
   type: string
@@ -45,6 +40,12 @@ questions:
   label: OIDC Client Secret
 
 # Keymanager
+- variable: keymanager.enabled
+  description: This installs Keymanager for managing Keys for Encrpytion and Signatures
+  type: boolean
+  label: Install Keymanager?
+  group: Keymanager Settings
+
 - variable: global.sparKeymanagerInstallationName
   description: |-
     Edit this only if you want to reuse existing Keymanager Installation.
@@ -110,5 +111,5 @@ questions:
     Do not edit this parameter unless required.
   type: string
   label: Allowed Keycloak Client IDs.
-  group: Keymanager Advanced Settings
+  group: Keymanager Settings
   show_if: "keymanager.enabled=true"

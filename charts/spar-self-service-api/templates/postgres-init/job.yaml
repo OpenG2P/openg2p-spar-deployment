@@ -5,8 +5,9 @@ metadata:
   name: {{ include "selfservice.fullname" . }}-postgres-init
   labels:
     {{- include "selfservice.labels" . | nindent 4 }}
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
+  {{- if .Values.postgresInit.hookAnnotations }}
+  annotations: {{- include "selfservice.tpl" (dict "value" .Values.postgresInit.hookAnnotations "context" $) | nindent 4 }}
+  {{- end }}
 spec:
   backoffLimit: {{ .Values.postgresInit.backoffLimit }}
   template:

@@ -64,12 +64,15 @@ spar-self-service-api:
   envVars:
     SPAR_SELFSERVICE_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
     SPAR_SELFSERVICE_MAPPER_API_URL: 'http://{{ .Release.Name }}-spar-mapper-api/sync'
-    SPAR_SELFSERVICE_AUTH_DEFAULT_ISSUERS: '["{{ .Values.global.esignetBaseUrl }}/v1/esignet"]'
-    SPAR_SELFSERVICE_AUTH_DEFAULT_JWKS_URLS: '["{{ .Values.global.esignetBaseUrl }}/v1/esignet/oauth/.well-known/jwks.json"]'
+    SPAR_SELFSERVICE_AUTH_DEFAULT_ISSUERS: '["{{ .Values.global.esignetBaseUrl }}"]'
+    SPAR_SELFSERVICE_AUTH_DEFAULT_JWKS_URLS: '["{{ .Values.global.esignetBaseUrl }}/.well-known/jwks.json"]'
   envVarsFrom:
     SPAR_SELFSERVICE_DB_PASSWORD:
       secretKeyRef:
         name: '{{ .Release.Name }}-postgresql'
+  postgresInit:
+    hookAnnotations:
+      "helm.sh/hook-weight": "0"
 
 spar-self-service-ui:
   enabled: true
@@ -87,3 +90,9 @@ keymanager:
     rawConfig: ""
   envVars:
     auth_server_admin_allowed_audience: 'openg2p-sr,openg2p-sr-{{ .Release.Namespace }},openg2p-pbms,openg2p-pbms-{{ .Release.Namespace }},openg2p-spar-{{ .Release.Namespace }}'
+  postgresInit:
+    commonAnnotations:
+      "helm.sh/hook-weight": "0"
+  keygen:
+    commonAnnotations:
+      "helm.sh/hook-weight": "1"
