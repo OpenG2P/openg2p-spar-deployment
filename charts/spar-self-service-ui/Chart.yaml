@@ -3,4 +3,8 @@ name: spar-self-service-ui
 description: A Helm chart for OpenG2P SPAR Self Service UI
 type: application
 version: 1.1.0-develop
+dependencies:
+- name: common
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 2.x.x
 icon: https://openg2p.github.io/openg2p-helm/openg2p-logo.png

@@ -1,14 +1,22 @@
 global:
-  sparHostname: spar.sandbox.openg2p.net
+  sparHostname: spar.openg2p.sandbox.net
 
-  sparAuthClientId: 'openg2p-spar'
+  sparAuthClientId: 'openg2p-spar-{{ .Release.Namespace }}'
   sparAuthClientSecret: ''
 
-  esignetBaseUrl: https://esignet.sandbox.openg2p.net
+  esignetBaseUrl: https://esignet.openg2p.sandbox.net
 
-  keycloakBaseUrl: https://keycloak.openg2p.sandbox.net
+  keycloakBaseUrl: https://keycloak.your.org
   keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
+
+  sparEsignetClientId: ''
+
   sparKeymanagerInstallationName: '{{ .Release.Name }}-keymanager'
+
+  sparKeymanagerAuthEnabled: false
+  sparKeymanagerMapperAppId: OPENG2P_SPAR
+  sparKeymanagerSelfserviceAppId: OPENG2P_SPAR_SELFSERVICE
+  sparKeymanagerSelfserviceNationalIdLoginAppId: OPENG2P_SPAR_NID_LOGIN
 
 postgresql:
   enabled: true
@@ -28,7 +36,7 @@ postgresql:
       max_replication_slots = 10
 
   istio:
-    enabled: true
+    enabled: false
     virtualservice:
       enabled: true
       host: "*"
@@ -49,51 +57,63 @@ postgresql:
 
 spar-mapper-api:
   enabled: true
-  postgresql:
-    enabled: false
+  hostname: '{{ tpl .Values.global.sparHostname $ }}'
   envVars:
-    SPAR_MAPPER_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
+    SPAR_MAPPER_JWT_VALIDATE_KEYMANAGER_APP_ID: '{{ tpl .Values.global.sparKeymanagerMapperAppId $ }}'
 
     # TODO: Convert these to be stored in secret
     SPAR_MAPPER_KEYMANAGER_API_BASE_URL: "http://{{ tpl .Values.global.sparKeymanagerInstallationName $ }}/v1/keymanager"
     SPAR_MAPPER_KEYMANAGER_AUTH_URL: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/protocol/openid-connect/token'
+    SPAR_MAPPER_KEYMANAGER_AUTH_ENABLED: '{{ .Values.global.sparKeymanagerAuthEnabled }}'
     SPAR_MAPPER_KEYMANAGER_AUTH_CLIENT_ID: '{{ tpl .Values.global.sparAuthClientId $ }}'
     SPAR_MAPPER_KEYMANAGER_AUTH_CLIENT_SECRET: '{{ tpl .Values.global.sparAuthClientSecret $ }}'
 
-  envVarsFrom:
-    SPAR_MAPPER_DB_PASSWORD:
-      secretKeyRef:
-        name: '{{ .Release.Name }}-postgresql'
-
 spar-self-service-api:
   enabled: true
-  postgresql:
-    enabled: false
+  hostname: '{{ tpl .Values.global.sparHostname $ }}'
   envVars:
-    SPAR_SELFSERVICE_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
-    SPAR_SELFSERVICE_MAPPER_API_URL: 'http://{{ .Release.Name }}-spar-mapper-api/sync'
-    SPAR_SELFSERVICE_AUTH_DEFAULT_ISSUERS: '["{{ .Values.global.esignetBaseUrl }}"]'
-    SPAR_SELFSERVICE_AUTH_DEFAULT_JWKS_URLS: '["{{ .Values.global.esignetBaseUrl }}/.well-known/jwks.json"]'
-  envVarsFrom:
-    SPAR_SELFSERVICE_DB_PASSWORD:
-      secretKeyRef:
-        name: '{{ .Release.Name }}-postgresql'
+    SPAR_SELFSERVICE_G2PCONNECT_SENDER_ID: spar-selfservice
+    SPAR_SELFSERVICE_G2PCONNECT_MAPPER_CLIENT_API_BASE_URL: 'http://{{ .Release.Name }}-spar-mapper-api/sync'
+
+    SPAR_SELFSERVICE_KEYMANAGER_API_BASE_URL: "http://{{ tpl .Values.global.sparKeymanagerInstallationName $ }}/v1/keymanager"
+    SPAR_SELFSERVICE_KEYMANAGER_AUTH_URL: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/protocol/openid-connect/token'
+    SPAR_SELFSERVICE_KEYMANAGER_AUTH_ENABLED: '{{ .Values.global.sparKeymanagerAuthEnabled }}'
+    SPAR_SELFSERVICE_KEYMANAGER_AUTH_CLIENT_ID: '{{ tpl .Values.global.sparAuthClientId $ }}'
+    SPAR_SELFSERVICE_KEYMANAGER_AUTH_CLIENT_SECRET: '{{ tpl .Values.global.sparAuthClientSecret $ }}'
+    SPAR_SELFSERVICE_KEYMANAGER_SIGN_APP_ID: '{{ tpl .Values.global.sparKeymanagerSelfserviceAppId $ }}'
   postgresInit:
     hookAnnotations:
       "helm.sh/hook-weight": "0"
+  keysInit:
+    enabled: true
+    envVars:
+      SPAR_SELFSERVICE_G2PCONNECT_JWT_VALIDATE_KEYMANAGER_APP_ID: '{{ tpl .Values.global.sparKeymanagerMapperAppId $ }}'
+    hookAnnotations:
+      "helm.sh/hook-weight": "2"
+
+  oauthPkce:
+    enabled: true
+
+  nationalIdLogin:
+    enabled: true
+    redirectScheme: https
+    issuer_url: '{{ tpl .Values.global.esignetBaseUrl $ }}'
+    client_id: '{{ tpl .Values.global.sparEsignetClientId $ }}'
+    keymanagerAppId: '{{ tpl .Values.global.sparKeymanagerSelfserviceNationalIdLoginAppId $ }}'
 
 spar-self-service-ui:
   enabled: true
+  hostname: '{{ tpl .Values.global.sparHostname $ }}'
 
 artifactory:
-  enabled: true
+  enabled: false
   image:
     repository: mosipid/artifactory-server
     tag: 1.4.1-ES
   resources: {}
 
 softhsm:
-  enabled: true
+  enabled: false
   # Hardcoding this for now. else every upgrade will reset the pin
   securityPIN: MzQwNTM0OTk=
   resources: {}
@@ -101,6 +121,10 @@ softhsm:
 keymanager:
   enabled: true
   hostname: '{{ tpl .Values.global.sparHostname $ }}'
+  authEnabled: '{{ .Values.global.sparKeymanagerAuthEnabled }}'
+  istio:
+    enabled: false
+  keystoreType: PKCS12
   springConfig:
     names: application,kernel
     profile: default
@@ -110,8 +134,6 @@ keymanager:
       branch: master
     rawConfig: ""
   envVars:
-    mosip_kernel_keymanager_autogen_appids_list: ROOT,SPAR
-    mosip_kernel_keymanager_autogen_basekeys_list: 'SPAR:ENCRYPT'
     auth_server_admin_allowed_audience: 'openg2p-spar,openg2p-spar-{{ .Release.Namespace }}'
   envVarsFrom:
     db_dbuser_password:
@@ -129,3 +151,13 @@ keymanager:
   keygen:
     commonAnnotations:
       "helm.sh/hook-weight": "1"
+    appIdsList:
+      - '{{ tpl .Values.global.sparKeymanagerMapperAppId $ }}'
+      - '{{ tpl .Values.global.sparKeymanagerSelfserviceAppId $ }}'
+      - '{{ tpl .Values.global.sparKeymanagerSelfserviceNationalIdLoginAppId $ }}'
+    baseKeysList:
+      - '{{ tpl .Values.global.sparKeymanagerMapperAppId $ }}:ENCRYPT'
+      - '{{ tpl .Values.global.sparKeymanagerSelfserviceAppId $ }}:ENCRYPT'
+      - '{{ tpl .Values.global.sparKeymanagerSelfserviceNationalIdLoginAppId $ }}:ENCRYPT'
+  persistence:
+    enabled: true

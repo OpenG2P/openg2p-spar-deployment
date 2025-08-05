@@ -1,27 +1,24 @@
-global:
-  sparHostname: spar.sandbox.openg2p.net
+hostname: spar.openg2p.sandbox.net
 
 replicaCount: 1
 image:
   repository: openg2p/openg2p-spar-mapper-api
-  pullPolicy: Always
-  # Overrides the image tag whose default is the chart appVersion.
   tag: "1.1"
+  pullPolicy: Always
 
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+openapiRootPath: /api/mapper
 
 envVars:
-  SPAR_MAPPER_DB_HOSTNAME: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
+  SPAR_MAPPER_PORT: '{{ .Values.containerPort }}'
+  SPAR_MAPPER_DB_HOSTNAME: '{{ tpl .Values.postgresqlInstallationName $ }}'
   SPAR_MAPPER_DB_USERNAME: "sparuser"
   SPAR_MAPPER_DB_DBNAME: "spardb"
-  SPAR_MAPPER_OPENAPI_ROOT_PATH: "/api/mapper"
+  SPAR_MAPPER_OPENAPI_ROOT_PATH: '{{ tpl .Values.openapiRootPath $ }}'
 
 envVarsFrom:
   SPAR_MAPPER_DB_PASSWORD:
     secretKeyRef:
-      name: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
+      name: '{{ tpl .Values.postgresqlInstallationName $ }}'
       key: password
 
 containerPort: 8000
@@ -42,21 +39,35 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
-readinessProbe:
+startupProbe:
+  enabled: true
   httpGet:
     path: /ping
-    port: 8000
-  failureThreshold: 20
+    port: http
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 10
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /ping
+    port: http
   periodSeconds: 30
   timeoutSeconds: 10
-  initialDelaySeconds: 30
+  successThreshold: 1
+  failureThreshold: 5
 
 livenessProbe:
+  enabled: true
   httpGet:
     path: /ping
-    port: 8000
-  initialDelaySeconds: 15
+    port: http
   periodSeconds: 60
+  timeoutSeconds: 10
+  successThreshold: 1
   failureThreshold: 5
 
 serviceAccount:
@@ -71,10 +82,12 @@ serviceAccount:
 podAnnotations:
   helm.sh/revision: '{{ .Release.Revision }}'
 
-podSecurityContext: {}
+podSecurityContext:
+  enabled: false
   # fsGroup: 2000
 
-containerSecurityContext: {}
+containerSecurityContext:
+  enabled: false
   # capabilities:
   #   drop:
   #   - ALL
@@ -86,6 +99,12 @@ nodeSelector: {}
 
 tolerations: []
 
+podAffinityPreset: ""
+podAntiAffinityPreset: soft
+nodeAffinityPreset:
+  type: ""
+  key: ""
+  values: []
 affinity: {}
 
 updateStrategy:
@@ -96,28 +115,33 @@ args: []
 
 postgresCheckerInit:
   enabled: true
-  image: jbergknoff/postgresql-client
+  image:
+    repository: jbergknoff/postgresql-client
+    tag: latest
+    pullPolicy: IfNotPresent
   command:
   - 'sh'
+  args:
   - '-c'
   - 'until pg_isready -U ${SPAR_MAPPER_DB_USERNAME} -h ${SPAR_MAPPER_DB_HOSTNAME} -p ${SPAR_MAPPER_DB_PORT:-5432} -d ${SPAR_MAPPER_DB_DBNAME:-spar_db}; do sleep 3; done'
+  containerSecurityContext:
+    enabled: false
 
 ingress:
   enabled: false
-  className: ""
+  ingressClassName: ""
+  pathType: ImplementationSpecific
+  backendServiceName: '{{ include "common.names.fullname" . }}'
+  path: '{{ tpl .Values.openapiRootPath $ }}(/|$)(.*)'
+  apiVersion: ""
+  hostname: ""
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /$2
-    kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: ""
-      paths:
-        - path: /api/mapper(/|$)(.*)
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+  tls: false
+  tlsSecret: ""
+  extraPaths: []
+  extraTls: []
+  extraRules: []
 
 istio:
   enabled: true
@@ -125,9 +149,9 @@ istio:
     enabled: true
     host: ""
     gateway: "internal"
-    destination: '{{ include "mapper.fullname" . }}'
+    destination: '{{ include "common.names.fullname" . }}'
     destinationPort: '{{ .Values.service.port }}'
-    prefix: /api/mapper/
+    prefix: '{{ tpl .Values.openapiRootPath $ }}/'
     rewriteUri: "/"
   gateway:
     enabled: false
@@ -141,13 +165,4 @@ istio:
       mode: SIMPLE
       credentialName: ""
 
-postgresql:
-  enabled: true
-  auth:
-    username: sparuser
-    database: spardb
-  primary:
-    extendedConfiguration: |-
-      wal_level = logical
-      max_wal_senders = 20
-      max_replication_slots = 10
+postgresqlInstallationName: '{{ .Release.Name }}-postgresql'

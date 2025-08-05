@@ -1,0 +1,67 @@
+{{- if .Values.keysInit.enabled  }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "common.names.fullname" . }}-keys-init
+  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.commonAnnotations "context" $) | nindent 4 }}
+    {{- end }}
+    {{- if .Values.keysInit.commonAnnotations }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.keysInit.commonAnnotations "context" $) | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.keysInit.backoffLimit }}
+  backoffLimit: {{ .Values.keysInit.backoffLimit }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "common.names.name" . }}-keys-init
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        sidecar.istio.io/inject: "false"
+    spec:
+      {{- include "sparSelfservice.imagePullSecrets" . | nindent 6 }}
+      serviceAccountName: {{ include "sparSelfservice.serviceAccountName" . }}
+      {{- if .Values.keysInit.podSecurityContext.enabled }}
+      securityContext: {{- omit .Values.keysInit.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      restartPolicy: {{ .Values.keysInit.restartPolicy }}
+      containers:
+        - name: keys-init
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.keysInit.image "global" .Values.global) }}
+          imagePullPolicy: {{ .Values.keysInit.image.pullPolicy }}
+          {{- if .Values.keysInit.command }}
+          command: {{- include "common.teplvalues.render" (dict "value" .Values.keysInit.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.keysInit.args }}
+          args: {{- include "common.teplvalues.render" (dict "value" .Values.keysInit.args "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if and .Values.keysInit.startUpCommand (not (or .Values.keysInit.command .Values.keysInit.args)) }}
+          command: ["/startup"]
+          {{- end }}
+          {{- if .Values.keysInit.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.keysInit.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          env: {{- include "sparSelfservice.keysInit.envVars" . | nindent 12 }}
+          volumeMounts:
+            {{- if and .Values.keysInit.startUpCommand (not (or .Values.keysInit.command .Values.keysInit.args)) }}
+            - name: keys-init-conf
+              mountPath: /startup
+              subPath: startup-command
+            {{- end }}
+            {{- if .Values.keysInit.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.keysInit.extraVolumeMounts "context" $) | nindent 12 }}
+            {{- end }}
+      volumes:
+        {{- if and .Values.keysInit.startUpCommand (not (or .Values.keysInit.command .Values.keysInit.args)) }}
+        - name: keys-init-conf
+          configMap:
+            name: {{ include "common.names.fullname" . }}-keys-init
+            defaultMode: 0755
+        {{- end }}
+        {{- if .Values.keysInit.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.keysInit.extraVolumes "context" $) | nindent 8 }}
+        {{- end }}
+{{- end }}

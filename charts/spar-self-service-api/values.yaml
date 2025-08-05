@@ -1,33 +1,39 @@
-global:
-  sparHostname: spar.openg2p.sandbox.net
+hostname: spar.openg2p.sandbox.net
 
 replicaCount: 1
 image:
   repository: openg2p/openg2p-spar-self-service-api
-  pullPolicy: Always
   tag: "1.1"
+  pullPolicy: Always
 
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+openapiRootPath: /api/selfservice
 
 envVars:
-  SPAR_SELFSERVICE_DB_HOSTNAME: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
+  SPAR_SELFSERVICE_LOGIN_PROVIDERS_TABLE_ENABLED: '{{ eq (len .Values.loginProviders) 0 }}'
+
+  SPAR_SELFSERVICE_PORT: '{{ .Values.containerPort }}'
+  SPAR_SELFSERVICE_DB_HOSTNAME: '{{ tpl .Values.postgresqlInstallationName $ }}'
   SPAR_SELFSERVICE_DB_USERNAME: "sparuser"
   SPAR_SELFSERVICE_DB_DBNAME: "spardb"
-  SPAR_SELFSERVICE_OPENAPI_ROOT_PATH: "/api/selfservice"
-  SPAR_SELFSERVICE_DEFAULT_ID_TOKEN_VERIFY_AT_HASH: "false"
-
-  SPAR_SELFSERVICE_AUTH_DEFAULT_ISSUERS: '["https://esignet.openg2p.sandbox.net","https://keycloak.openg2p.sandbox.net/realms/master"]'
-  SPAR_SELFSERVICE_AUTH_DEFAULT_JWKS_URLS: '["https://esignet.openg2p.sandbox.net/.well-known/jwks.json","https://keycloak.openg2p.sandbox.net/realms/master/protocol/openid-connect/certs"]'
-
-  SPAR_SELFSERVICE_MAPPER_API_URL: 'http://mapper/sync'
+  SPAR_SELFSERVICE_OPENAPI_ROOT_PATH: '{{ tpl .Values.openapiRootPath $ }}'
 
 envVarsFrom:
+  SPAR_SELFSERVICE_LOGIN_PROVIDERS_LIST:
+    enabled: '{{ gt (len .Values.loginProviders) 0 }}'
+    secretKeyRef:
+      name: '{{ include "common.names.fullname" . }}'
+      key: login-providers-list
+
   SPAR_SELFSERVICE_DB_PASSWORD:
     secretKeyRef:
-      name: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
+      name: '{{ tpl .Values.postgresqlInstallationName $ }}'
       key: password
+
+  SPAR_SELFSERVICE_LOGIN_PROVIDERS_LIST_PKCE_CODE_VERIFIER:
+    enabled: '{{ .Values.oauthPkce.enabled }}'
+    secretKeyRef:
+      name: '{{ include "common.names.fullname" . }}'
+      key: oauth-pkce-code-verifier
 
 containerPort: 8000
 
@@ -47,21 +53,35 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
-readinessProbe:
+startupProbe:
+  enabled: true
   httpGet:
     path: /ping
-    port: 8000
-  failureThreshold: 20
+    port: http
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 10
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /ping
+    port: http
   periodSeconds: 30
   timeoutSeconds: 10
-  initialDelaySeconds: 30
+  successThreshold: 1
+  failureThreshold: 5
 
 livenessProbe:
+  enabled: true
   httpGet:
     path: /ping
-    port: 8000
-  initialDelaySeconds: 15
+    port: http
   periodSeconds: 60
+  timeoutSeconds: 10
+  successThreshold: 1
   failureThreshold: 5
 
 serviceAccount:
@@ -76,10 +96,12 @@ serviceAccount:
 podAnnotations:
   helm.sh/revision: '{{ .Release.Revision }}'
 
-podSecurityContext: {}
+podSecurityContext:
+  enabled: false
   # fsGroup: 2000
 
-containerSecurityContext: {}
+containerSecurityContext:
+  enabled: false
   # capabilities:
   #   drop:
   #   - ALL
@@ -91,38 +113,93 @@ nodeSelector: {}
 
 tolerations: []
 
+podAffinityPreset: ""
+podAntiAffinityPreset: soft
+nodeAffinityPreset:
+  type: ""
+  key: ""
+  values: []
 affinity: {}
 
 updateStrategy:
   type: RollingUpdate
 
-command: []
-args: []
+command:
+- bash
+args:
+- -c
+- gunicorn "main:app" --workers ${SPAR_SELFSERVICE_NO_OF_WORKERS} --worker-class uvicorn.workers.UvicornWorker --bind ${SPAR_SELFSERVICE_HOST}:${SPAR_SELFSERVICE_PORT}
+
+oauthPkce:
+  enabled: true
+  codeVerifier: ""  # Leave blank to generate automatically
+
+nationalIdLogin:
+  enabled: true
+  redirectScheme: https
+  issuer_url: ""
+  jwks_url: '{{ tpl .Values.nationalIdLogin.issuer_url $ }}/.well-known/jwks.json'
+  client_id: ""
+  keymanagerAppId: ""
+  keymanagerRefId: ""
+
+loginProviders:
+- id: 1
+  enabled: '{{ .Values.nationalIdLogin.enabled }}'
+  active: true
+  name: National ID
+  description: National ID - e-Signet
+  login_button_text: PROCEED WITH NATIONAL ID
+  login_button_image_url: https://login.url
+  strategy_id: 1
+  type: oauth2_auth_code
+  iss: '{{ tpl .Values.nationalIdLogin.issuer_url $ }}'
+  jwks_url: '{{ tpl .Values.nationalIdLogin.jwks_url $ }}'
+  authorization_parameters:
+    authorize_endpoint: '{{ tpl .Values.nationalIdLogin.issuer_url $ }}/authorize'
+    token_endpoint: '{{ tpl .Values.nationalIdLogin.issuer_url $ }}/v1/esignet/oauth/v2/token'
+    validate_endpoint: '{{ tpl .Values.nationalIdLogin.issuer_url $ }}/v1/esignet/oidc/userinfo'
+    jwks_endpoint: '{{ tpl .Values.nationalIdLogin.jwks_url $ }}'
+    client_id: '{{ tpl .Values.nationalIdLogin.client_id $ }}'
+    client_assertion_type: private_key_jwt_keymanager
+    client_assertion_jwk_keymanager: '{{ tpl .Values.nationalIdLogin.keymanagerAppId $ }}:{{ tpl .Values.nationalIdLogin.keymanagerRefId $ }}'
+    response_type: code
+    scope: openid profile email
+    enable_pkce: '{{ .Values.oauthPkce.enabled }}'
+    redirect_uri: '{{ tpl .Values.nationalIdLogin.redirectScheme $ }}://{{ tpl .Values.hostname $ }}{{ tpl .Values.openapiRootPath $ }}/oauth2/callback'
+    extra_authorize_parameters:
+      acr_values: mosip:idp:acr:generated-code mosip:idp:acr:biometrics mosip:idp:acr:linked-wallet
+      claims: '{"userinfo":{"name":{"essential":true},"phone_number":{"essential":false},"email":{"essential":false},"gender":{"essential":true},"birthdate":{"essential":true},"address":{"essential":false},"picture":{"essential":false}},"id_token":{}}'
 
 postgresCheckerInit:
   enabled: true
-  image: jbergknoff/postgresql-client
+  image:
+    repository: jbergknoff/postgresql-client
+    tag: latest
+    pullPolicy: IfNotPresent
   command:
   - 'sh'
+  args:
   - '-c'
   - 'until pg_isready -U ${SPAR_SELFSERVICE_DB_USERNAME} -h ${SPAR_SELFSERVICE_DB_HOSTNAME} -p ${SPAR_SELFSERVICE_DB_PORT:-5432} -d ${SPAR_SELFSERVICE_DB_DBNAME:-spar_db}; do sleep 3; done'
+  containerSecurityContext:
+    enabled: false
 
 ingress:
   enabled: false
-  className: ""
+  ingressClassName: ""
+  pathType: ImplementationSpecific
+  backendServiceName: '{{ include "common.names.fullname" . }}'
+  path: '{{ tpl .Values.openapiRootPath $ }}(/|$)(.*)'
+  apiVersion: ""
+  hostname: ""
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /$2
-    kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: ""
-      paths:
-        - path: /api/selfservice(/|$)(.*)
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+  tls: false
+  tlsSecret: ""
+  extraPaths: []
+  extraTls: []
+  extraRules: []
 
 istio:
   enabled: true
@@ -130,9 +207,9 @@ istio:
     enabled: true
     host: ""
     gateway: "internal"
-    destination: '{{ include "selfservice.fullname" . }}'
+    destination: '{{ include "common.names.fullname" . }}'
     destinationPort: '{{ .Values.service.port }}'
-    prefix: /api/selfservice/
+    prefix: '{{ tpl .Values.openapiRootPath $ }}/'
     rewriteUri: "/"
   gateway:
     enabled: false
@@ -146,43 +223,145 @@ istio:
       mode: SIMPLE
       credentialName: ""
 
-postgresql:
-  enabled: true
-  auth:
-    username: sparuser
-    database: spardb
-  primary:
-    extendedConfiguration: |-
-      wal_level = logical
-      max_wal_senders = 20
-      max_replication_slots = 10
-
-
 postgresInit:
   enabled: true
-  image: jbergknoff/postgresql-client
-  imagePullPolicy: Always
+  image:
+    repository: openg2p/openg2p-spar-self-service-api
+    tag: "1.1"
+    pullPolicy: Always
   restartPolicy: Never
-  envVars:
-    GIT_REPO_URL: 'https://github.com/openg2p/openg2p-spar-self-service'
-    GIT_BRANCH: 'develop'
-    WAIT_BEFORE_STARTUP: 10s
+  containerSecurityContext:
+    enabled: false
+  podSecurityContext:
+    enabled: false
+  envVars: {}
   envVarsFrom: {}
   backoffLimit: 1
+  initContainers: []
   command:
-  - sh
+  - bash
+  args:
+  - -o
+  - pipefail
+  - -e
   - -c
   - >-
-    sleep $WAIT_BEFORE_STARTUP;
-    apk --no-cache add bash gettext git;
+    python3 main.py migrate;
     export DB_HOST=$SPAR_SELFSERVICE_DB_HOSTNAME;
+    export DB_PORT=${SPAR_SELFSERVICE_DB_PORT:-5432};
+    export DB_NAME=$SPAR_SELFSERVICE_DB_DBNAME;
     export DB_USER=$SPAR_SELFSERVICE_DB_USERNAME;
     export DB_USER_PASSWORD=$SPAR_SELFSERVICE_DB_PASSWORD;
-    git_repo_name="$(basename "$GIT_REPO_URL" .git)";
-    git clone --depth 1 --branch $GIT_BRANCH $GIT_REPO_URL &&
-    cd $git_repo_name/db_scripts &&
+    cd /app/db_scripts;
     ./deploy.sh
   hookAnnotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "0"
     "helm.sh/hook-delete-policy": before-hook-creation
+
+keysInit:
+  enabled: false
+  image:
+    repository: openg2p/openg2p-spar-self-service-api
+    tag: "1.1"
+    pullPolicy: Always
+  restartPolicy: Never
+  containerSecurityContext:
+    enabled: false
+  podSecurityContext:
+    enabled: false
+  commonAnnotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+  command: []
+  args: []
+  extraVolumeMounts: []
+  extraVolumes: []
+
+  envVars:
+    SPAR_SELFSERVICE_G2PCONNECT_JWT_VALIDATE_KEYMANAGER_APP_ID: ""  # Should be set to SPAR Mapper KM APP ID
+  envVarsFrom: {}
+
+  startUpCommand: |-
+    #!/usr/bin/env python
+
+    import asyncio
+
+    import httpx
+    from openg2p_spar_self_service_api.config import Settings
+    from openg2p_spar_g2pconnect_mapper_connector_lib.config import Settings as MapperConnectorSettings
+
+    _config = Settings.get_config()
+    _mapper_config = MapperConnectorSettings.get_config()
+
+    from openg2p_fastapi_common.utils.crypto import KeymanagerCryptoHelper
+    from openg2p_g2pconnect_common_lib.jwt_validation_helper import JWTValidationHelper
+
+    async def get_sign_cert(km_helper, app_id, ref_id, retries=25, sleep=15):
+        infinite = not retries
+        while infinite or retries >= 0:
+            try:
+                cookies = {}
+                if km_helper.auth_enabled:
+                    cookies["Authorization"] = await km_helper.get_auth_token()
+                res = await km_helper.http_client.get(f"{km_helper.api_base_url}/getAllCertificates", cookies=cookies, params={
+                    "applicationId": app_id,
+                    "referenceId": ref_id
+                })
+                try:
+                    res.raise_for_status()
+                except httpx.HTTPError as e:
+                    print(f"Error Downloading cert for APP ID: REF ID - {app_id}:{ref_id}. Response: {res.text}.")
+                    raise e
+                all_certs = res.json()["response"]["allCertificates"]
+                if not all_certs:
+                    raise ValueError(f"Received empty certificates list for APP ID: REF ID - {app_id}:{ref_id}")
+                print(f"Downloading Cert Successful for APP ID: REF ID - {app_id}:{ref_id}")
+                return all_certs[0]["certificateData"]
+            except (httpx.HTTPError, ValueError) as e:
+                print(f"Error Retrieving cert for Keymanager. {e}")
+                if retries == 0: raise e
+                retries -= 1
+                await asyncio.sleep(sleep)
+
+    async def upload_partner_cert(km_helper, app_id, ref_id, cert_data):
+        cookies = {}
+        if km_helper.auth_enabled:
+            cookies["Authorization"] = await km_helper.get_auth_token()
+        res = await km_helper.http_client.post(f"{km_helper.api_base_url}/uploadOtherDomainCertificate", cookies=cookies, json={
+            "id": "string", "version": "string", "metadata": {},
+            "requesttime": km_helper.get_current_isotimestamp(),
+            "request": {
+              "applicationId": app_id,
+              "referenceId": ref_id,
+              "certificateData": cert_data,
+            }
+        })
+        try:
+            res.raise_for_status()
+        except httpx.HTTPError as e:
+            print(f"Error Uploading cert for APP ID: REF ID - {app_id}:{ref_id}. Response: {res.text}")
+            raise e
+        print(f"Uploading Cert Successful for APP ID: REF ID - {app_id}:{ref_id}")
+
+    async def main():
+        km_helper = KeymanagerCryptoHelper()
+        jwt_validation_helper = JWTValidationHelper()
+        payload = {"header": {"sender_id": _mapper_config.sender_id}}
+        cert_data = await get_sign_cert(
+            km_helper,
+            await km_helper.get_sign_app_id(payload),
+            await km_helper.get_sign_ref_id(payload),
+        )
+        await upload_partner_cert(
+            km_helper,
+            _mapper_config.jwt_validate_keymanager_app_id,
+            jwt_validation_helper.get_partner_id_from_payload(payload),
+            cert_data,
+        )
+
+    if __name__ == "__main__":
+        asyncio.run(main())
+
+postgresqlInstallationName: '{{ .Release.Name }}-postgresql'

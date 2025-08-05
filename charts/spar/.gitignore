@@ -1,3 +1,5 @@
 charts/*.tgz
 charts/keymanager*
+charts/artifactory*
+charts/softhsm*
 Chart.lock
