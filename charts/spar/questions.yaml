@@ -25,7 +25,7 @@ questions:
   label: Keycloak Base URL
   # Currently this is required only for the purpose of keymanager.
   # Change this "show_if" condition later if this is required for other purposes also.
-  show_if: "keymanager.enabled=true&&global.keymanagerAuthEnabled=true"
+  show_if: "keymanager.enabled=true&&global.sparKeymanagerAuthEnabled=true"
 
 - variable: global.sparAuthClientId
   description: OIDC Client ID for SPAR
@@ -33,7 +33,7 @@ questions:
   label: OIDC Client ID
   # Currently this is required only for the purpose of keymanager.
   # Change this "show_if" condition later if this is required for other purposes also.
-  show_if: "keymanager.enabled=true&&global.keymanagerAuthEnabled=true"
+  show_if: "keymanager.enabled=true&&global.sparKeymanagerAuthEnabled=true"
 
 - variable: global.sparAuthClientSecret
   description: OIDC Client Secret for SPAR
@@ -41,7 +41,7 @@ questions:
   label: OIDC Client Secret
   # Currently this is required only for the purpose of keymanager.
   # Change this "show_if" condition later if this is required for other purposes also.
-  show_if: "keymanager.enabled=true&&global.keymanagerAuthEnabled=true"
+  show_if: "keymanager.enabled=true&&global.sparKeymanagerAuthEnabled=true"
 
 - variable: spar-self-service-api.nationalIdLogin.enabled
   type: boolean
@@ -145,7 +145,7 @@ questions:
   type: string
   label: Allowed Keycloak Client IDs.
   group: Keymanager Settings
-  show_if: "keymanager.enabled=true&&global.keymanagerAuthEnabled=true"
+  show_if: "keymanager.enabled=true&&global.sparKeymanagerAuthEnabled=true"
 
 - variable: keymanager.keystoreType
   label: Keystore Type

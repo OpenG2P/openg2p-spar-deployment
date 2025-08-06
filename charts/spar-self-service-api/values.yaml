@@ -226,9 +226,9 @@ istio:
 postgresInit:
   enabled: true
   image:
-    repository: openg2p/openg2p-spar-self-service-api
-    tag: "1.1"
-    pullPolicy: Always
+    repository: '{{ tpl .Values.image.repository $ }}'
+    tag: '{{ tpl .Values.image.tag $ }}'
+    pullPolicy: '{{ tpl .Values.image.pullPolicy $ }}'
   restartPolicy: Never
   containerSecurityContext:
     enabled: false
@@ -262,9 +262,9 @@ postgresInit:
 keysInit:
   enabled: false
   image:
-    repository: openg2p/openg2p-spar-self-service-api
-    tag: "1.1"
-    pullPolicy: Always
+    repository: '{{ tpl .Values.image.repository $ }}'
+    tag: '{{ tpl .Values.image.tag $ }}'
+    pullPolicy: '{{ tpl .Values.image.pullPolicy $ }}'
   restartPolicy: Never
   containerSecurityContext:
     enabled: false

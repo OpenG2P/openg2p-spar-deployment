@@ -25,13 +25,14 @@ spec:
       {{- include "sparSelfservice.imagePullSecrets" . | nindent 6 }}
       serviceAccountName: {{ include "sparSelfservice.serviceAccountName" . }}
       {{- if .Values.keysInit.podSecurityContext.enabled }}
-      securityContext: {{- omit .Values.keysInit.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      securityContext: {{- include "common.tplvalues.render" (dict "value" (omit .Values.keysInit.podSecurityContext "enabled") "context" $) | nindent 8 }}
       {{- end }}
       restartPolicy: {{ .Values.keysInit.restartPolicy }}
       containers:
         - name: keys-init
-          image: {{ include "common.images.image" (dict "imageRoot" .Values.keysInit.image "global" .Values.global) }}
-          imagePullPolicy: {{ .Values.keysInit.image.pullPolicy }}
+          {{- $image := include "common.tplvalues.render" (dict "value" .Values.keysInit.image "context" $) | fromYaml }}
+          image: {{ include "common.images.image" (dict "imageRoot" $image "global" .Values.global) }}
+          imagePullPolicy: {{ include "common.tplvalues.render" (dict "value" .Values.keysInit.image.pullPolicy "context" $) }}
           {{- if .Values.keysInit.command }}
           command: {{- include "common.teplvalues.render" (dict "value" .Values.keysInit.command "context" $) | nindent 12 }}
           {{- end }}
@@ -42,9 +43,9 @@ spec:
           command: ["/startup"]
           {{- end }}
           {{- if .Values.keysInit.containerSecurityContext.enabled }}
-          securityContext: {{- omit .Values.keysInit.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          securityContext: {{- include "common.tplvalues.render" (dict "value" (omit .Values.keysInit.containerSecurityContext "enabled") "context" $) | nindent 12 }}
           {{- end }}
-          env: {{- include "sparSelfservice.keysInit.envVars" . | nindent 12 }}
+          env: {{- include "sparSelfservice.keysInit.envVars" . | indent 12 }}
           volumeMounts:
             {{- if and .Values.keysInit.startUpCommand (not (or .Values.keysInit.command .Values.keysInit.args)) }}
             - name: keys-init-conf

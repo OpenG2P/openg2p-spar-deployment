@@ -10,8 +10,8 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
-  {{- with .Values.updateStrategy }}
-  strategy: {{- toYaml . | nindent 4 }}
+  {{- if .Values.updateStrategy }}
+  strategy: {{- include "common.tplvalues.render" (dict "value" .Values.updateStrategy "context" $) | nindent 4 }}
   {{- end }}
   selector:
     matchLabels: {{- include "common.labels.matchLabels" (dict "customLabels" .Values.podLabels "context" $) | nindent 6 }}
@@ -39,13 +39,13 @@ spec:
       nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.nodeSelector "context" $) | nindent 8 }}
       {{- end }}
       {{- if .Values.tolerations }}
-      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.tolerations "context" .) | nindent 8 }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.tolerations "context" $) | nindent 8 }}
       {{- end }}
       {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName | quote }}
       {{- end }}
       {{- if .Values.podSecurityContext.enabled }}
-      securityContext: {{- omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      securityContext: {{- include "common.tplvalues.render" (dict "value" (omit .Values.podSecurityContext "enabled") "context" $) | nindent 8 }}
       {{- end }}
       {{- if or .Values.postgresCheckerInit.enabled .Values.initContainers }}
       initContainers:
@@ -60,9 +60,9 @@ spec:
           args: {{- include "common.tplvalues.render" (dict "value" .Values.postgresCheckerInit.args "context" $) | nindent 12 }}
           {{- end }}
           {{- if .Values.postgresCheckerInit.containerSecurityContext.enabled }}
-          securityContext: {{- omit .Values.postgresCheckerInit.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          securityContext: {{- include "common.tplvalues.render" (dict "value" (omit .Values.postgresCheckerInit.containerSecurityContext "enabled") "context" $) | nindent 12 }}
           {{- end }}
-          env: {{- include "sparSelfservice.envVars" . | nindent 12 }}
+          env: {{- include "sparSelfservice.envVars" . | indent 12 }}
         {{- end }}
         {{- if .Values.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.initContainers "context" $) | nindent 8 }}
@@ -76,13 +76,13 @@ spec:
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
           {{- if .Values.containerSecurityContext.enabled }}
-          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          securityContext: {{- include "common.tplvalues.render" (dict "value" (omit .Values.containerSecurityContext "enabled") "context" $) | nindent 12 }}
           {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.containerPort }}
               protocol: TCP
-          env: {{- include "sparSelfservice.envVars" . | nindent 12 }}
+          env: {{- include "sparSelfservice.envVars" . | indent 12 }}
           {{- if .Values.command }}
           command: {{- include "common.tplvalues.render" (dict "value" .Values.command "context" $) | nindent 12 }}
           {{- end }}

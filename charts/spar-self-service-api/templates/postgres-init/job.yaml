@@ -24,7 +24,7 @@ spec:
     spec:
       {{- include "sparSelfservice.imagePullSecrets" . | nindent 6 }}
       {{- if .Values.postgresInit.podSecurityContext.enabled }}
-      securityContext: {{- omit .Values.postgresInit.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      securityContext: {{- include "common.tplvalues.render" (dict "value" (omit .Values.postgresInit.podSecurityContext "enabled") "context" $) | nindent 8 }}
       {{- end }}
       restartPolicy: {{ .Values.postgresInit.restartPolicy }}
       serviceAccountName: {{ include "sparSelfservice.serviceAccountName" . }}
@@ -41,9 +41,9 @@ spec:
           args: {{- include "common.tplvalues.render" (dict "value" .Values.postgresCheckerInit.args "context" $) | nindent 12 }}
           {{- end }}
           {{- if .Values.postgresCheckerInit.containerSecurityContext.enabled }}
-          securityContext: {{- omit .Values.postgresCheckerInit.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          securityContext: {{- include "common.tplvalues.render" (dict "value" (omit .Values.postgresCheckerInit.containerSecurityContext "enabled") "context" $) | nindent 12 }}
           {{- end }}
-          env: {{- include "sparSelfservice.envVars" . | nindent 12 }}
+          env: {{- include "sparSelfservice.envVars" . | indent 12 }}
         {{- end }}
         {{- if .Values.postgresInit.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.postgresInit.initContainers "context" $) | nindent 8 }}
@@ -51,9 +51,10 @@ spec:
       {{- end }}
       containers:
         - name: postgres-init
-          image: {{ include "common.images.image" (dict "imageRoot" .Values.postgresInit.image "global" .Values.global) }}
-          imagePullPolicy: {{ .Values.postgresInit.image.pullPolicy }}
-          env: {{- include "sparSelfservice.postgresInit.envVars" . | nindent 12 }}
+          {{- $image := include "common.tplvalues.render" (dict "value" .Values.postgresInit.image "context" $) | fromYaml }}
+          image: {{ include "common.images.image" (dict "imageRoot" $image "global" .Values.global) }}
+          imagePullPolicy: {{ include "common.tplvalues.render" (dict "value" .Values.postgresInit.image.pullPolicy "context" $) }}
+          env: {{- include "sparSelfservice.postgresInit.envVars" . | indent 12 }}
           {{- if .Values.postgresInit.command }}
           command: {{- include "common.tplvalues.render" (dict "value" .Values.postgresInit.command "context" $) | nindent 12 }}
           {{- end }}
@@ -61,7 +62,7 @@ spec:
           args: {{- include "common.tplvalues.render" (dict "value" .Values.postgresInit.args "context" $) | nindent 12 }}
           {{- end }}
           {{- if .Values.postgresInit.containerSecurityContext.enabled }}
-          securityContext: {{- omit .Values.postgresInit.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          securityContext: {{- include "common.tplvalues.render" (dict "value" (omit .Values.postgresInit.containerSecurityContext "enabled") "context" $) | nindent 12 }}
           {{- end }}
           {{- if .Values.postgresInit.extraVolumeMounts }}
           volumeMounts: {{- include "common.tplvalues.render" (dict "value" .Values.postgresInit.extraVolumeMounts "context" $) | nindent 12 }}
