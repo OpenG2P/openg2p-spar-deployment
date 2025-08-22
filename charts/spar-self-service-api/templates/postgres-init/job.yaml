@@ -2,23 +2,72 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "selfservice.fullname" . }}-postgres-init
-  labels:
-    {{- include "selfservice.labels" . | nindent 4 }}
-  {{- if .Values.postgresInit.hookAnnotations }}
-  annotations: {{- include "selfservice.tpl" (dict "value" .Values.postgresInit.hookAnnotations "context" $) | nindent 4 }}
-  {{- end }}
+  name: {{ include "common.names.fullname" . }}-postgres-init
+  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.commonAnnotations "context" $) | nindent 4 }}
+    {{- end }}
+    {{- if .Values.postgresInit.hookAnnotations }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.postgresInit.hookAnnotations "context" $) | nindent 4 }}
+    {{- end }}
 spec:
+  {{- if .Values.postgresInit.backoffLimit }}
   backoffLimit: {{ .Values.postgresInit.backoffLimit }}
+  {{- end }}
   template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "common.names.name" . }}-post-init
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        sidecar.istio.io/inject: "false"
     spec:
+      {{- include "sparSelfservice.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.postgresInit.podSecurityContext.enabled }}
+      securityContext: {{- include "common.tplvalues.render" (dict "value" (omit .Values.postgresInit.podSecurityContext "enabled") "context" $) | nindent 8 }}
+      {{- end }}
       restartPolicy: {{ .Values.postgresInit.restartPolicy }}
-      serviceAccountName: {{ include "selfservice.serviceAccountName" . }}
+      serviceAccountName: {{ include "sparSelfservice.serviceAccountName" . }}
+      {{- if or .Values.postgresCheckerInit.enabled .Values.postgresInit.initContainers }}
+      initContainers:
+        {{- if .Values.postgresCheckerInit.enabled }}
+        - name: postgres-init-postgres-checker
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.postgresCheckerInit.image "global" .Values.global) }}
+          imagePullPolicy: {{ .Values.postgresCheckerInit.image.pullPolicy }}
+          {{- if .Values.postgresCheckerInit.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.postgresCheckerInit.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.postgresCheckerInit.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.postgresCheckerInit.args "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.postgresCheckerInit.containerSecurityContext.enabled }}
+          securityContext: {{- include "common.tplvalues.render" (dict "value" (omit .Values.postgresCheckerInit.containerSecurityContext "enabled") "context" $) | nindent 12 }}
+          {{- end }}
+          env: {{- include "sparSelfservice.envVars" . | indent 12 }}
+        {{- end }}
+        {{- if .Values.postgresInit.initContainers }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.postgresInit.initContainers "context" $) | nindent 8 }}
+        {{- end }}
+      {{- end }}
       containers:
         - name: postgres-init
-          image: {{ .Values.postgresInit.image }}
-          imagePullPolicy: {{ .Values.postgresInit.imagePullPolicy }}
-          env: {{- include "selfservice.envVars" . | nindent 12 }}
-            {{- include "selfservice.postgresInitEnvVars" . | nindent 12 }}
-          command: {{- toYaml .Values.postgresInit.command | nindent 12 }}
+          {{- $image := include "common.tplvalues.render" (dict "value" .Values.postgresInit.image "context" $) | fromYaml }}
+          image: {{ include "common.images.image" (dict "imageRoot" $image "global" .Values.global) }}
+          imagePullPolicy: {{ include "common.tplvalues.render" (dict "value" .Values.postgresInit.image.pullPolicy "context" $) }}
+          env: {{- include "sparSelfservice.postgresInit.envVars" . | indent 12 }}
+          {{- if .Values.postgresInit.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.postgresInit.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.postgresInit.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.postgresInit.args "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.postgresInit.containerSecurityContext.enabled }}
+          securityContext: {{- include "common.tplvalues.render" (dict "value" (omit .Values.postgresInit.containerSecurityContext "enabled") "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.postgresInit.extraVolumeMounts }}
+          volumeMounts: {{- include "common.tplvalues.render" (dict "value" .Values.postgresInit.extraVolumeMounts "context" $) | nindent 12 }}
+          {{- end }}
+      {{- if .Values.postgresInit.extraVolumes }}
+      volumes: {{- include "common.tplvalues.render" (dict "value" .Values.postgresInit.extraVolumes "context" $) | nindent 8 }}
+      {{- end }}
 {{- end }}

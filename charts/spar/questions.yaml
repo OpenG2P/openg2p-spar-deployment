@@ -19,25 +19,49 @@ questions:
   type: boolean
   label: SPAR Self Service UI
 
-- variable: global.esignetBaseUrl
-  description: Base URL of eSignet. SPAR will considered this esignet as valid Authenticator.
-  type: string
-  label: eSignet Base URL
-
 - variable: global.keycloakBaseUrl
   description: Keycloak Base Url. Used for authentication of some API
   type: string
   label: Keycloak Base URL
+  # Currently this is required only for the purpose of keymanager.
+  # Change this "show_if" condition later if this is required for other purposes also.
+  show_if: "keymanager.enabled=true&&global.sparKeymanagerAuthEnabled=true"
 
 - variable: global.sparAuthClientId
-  description: OIDC Client ID for PBMS
+  description: OIDC Client ID for SPAR
   type: string
   label: OIDC Client ID
+  # Currently this is required only for the purpose of keymanager.
+  # Change this "show_if" condition later if this is required for other purposes also.
+  show_if: "keymanager.enabled=true&&global.sparKeymanagerAuthEnabled=true"
 
 - variable: global.sparAuthClientSecret
-  description: OIDC Client Secret for PBMS
+  description: OIDC Client Secret for SPAR
   type: string
   label: OIDC Client Secret
+  # Currently this is required only for the purpose of keymanager.
+  # Change this "show_if" condition later if this is required for other purposes also.
+  show_if: "keymanager.enabled=true&&global.sparKeymanagerAuthEnabled=true"
+
+- variable: spar-self-service-api.nationalIdLogin.enabled
+  type: boolean
+  label: SPAR Self Service - Enable Login with National ID?
+  description: This enables eSignet login for SPAR Selfservice.
+  show_if: "spar-self-service-api.enabled=true"
+
+- variable: global.esignetBaseUrl
+  type: string
+  label: eSignet Base URL
+  description: SPAR will use this esignet for National ID Authentication.
+  # Currently this is required only for the purpose of Selfservice National ID login.
+  # Change this "show_if" condition later if this is required for other purposes also.
+  show_if: "spar-self-service-api.enabled=true&&spar-self-service-api.nationalIdLogin.enabled=true"
+
+- variable: global.sparEsignetClientId
+  type: string
+  label: SPAR Selfservice eSignet Client ID
+  description: For National ID Authentication.
+  show_if: "spar-self-service-api.enabled=true&&spar-self-service-api.nationalIdLogin.enabled=true"
 
 # Keymanager
 - variable: keymanager.enabled
@@ -55,10 +79,19 @@ questions:
   group: Keymanager Settings
   show_if: "keymanager.enabled=false"
 
-- variable: keymanager.hostname
-  description: Hostname under which Keymanager should be accessible
-  type: string
-  label: Keymanager Hostname
+- variable: global.sparKeymanagerAuthEnabled
+  label: API Authentication Enabled
+  description: Enables Keymanager API Authentication.
+  type: boolean
+  group: Keymanager Settings
+  show_if: "keymanager.enabled=true"
+
+- variable: keymanager.istio.enabled
+  label: Expose Keymanager APIs
+  description: >-
+    Enable this to manually download/upload certificates to Keymanager.
+    This exposes Keymanager APIs publicly outside Kubernetes.
+  type: boolean
   group: Keymanager Settings
   show_if: "keymanager.enabled=true"
 
@@ -111,5 +144,38 @@ questions:
     Do not edit this parameter unless required.
   type: string
   label: Allowed Keycloak Client IDs.
+  group: Keymanager Settings
+  show_if: "keymanager.enabled=true&&global.sparKeymanagerAuthEnabled=true"
+
+- variable: keymanager.keystoreType
+  label: Keystore Type
+  description: PKCS11 for HSM. PKCS12 for storing into local p12 file.
+  type: enum
+  options:
+    - PKCS11
+    - PKCS12
+  group: Keymanager Settings
+  show_if: "keymanager.enabled=true"
+
+- variable: keymanager.persistence.enabled
+  label: Persistence Enabled
+  description: Enable this if Keystore Type is PKCS12.
+  type: boolean
+  group: Keymanager Settings
+  show_if: "keymanager.enabled=true"
+
+- variable: artifactory.enabled
+  label: Install Artifactory?
+  description: >-
+    This is mandatory if Keymanger API Auth is enabled. Or if
+    Keymanager Keystore type is PKCS11.
+  type: boolean
+  group: Keymanager Settings
+  show_if: "keymanager.enabled=true"
+
+- variable: softhsm.enabled
+  label: Install Softhsm?
+  description: Enable this if Keystore Type is PKCS11.
+  type: boolean
   group: Keymanager Settings
   show_if: "keymanager.enabled=true"

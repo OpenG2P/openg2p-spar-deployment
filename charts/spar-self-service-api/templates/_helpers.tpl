@@ -1,101 +1,81 @@
 {{/*
-Expand the name of the chart.
+Return the proper Docker Image Registry Secret Names
 */}}
-{{- define "selfservice.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains chart name it will be used as a full name.
-*/}}
-{{- define "selfservice.fullname" -}}
-{{- if .Values.fullnameOverride }}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- $name := default .Chart.Name .Values.nameOverride }}
-{{- if contains $name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
-{{- end }}
-{{- end }}
-{{- end }}
-
-{{/*
-Create chart name and version as used by the chart label.
-*/}}
-{{- define "selfservice.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
-Common labels
-*/}}
-{{- define "selfservice.labels" -}}
-helm.sh/chart: {{ include "selfservice.chart" . }}
-{{ include "selfservice.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
-
-{{/*
-Selector labels
-*/}}
-{{- define "selfservice.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "selfservice.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
+{{- define "sparSelfservice.imagePullSecrets" -}}
+{{- include "common.images.pullSecrets" (dict "images" (list .Values.image .Values.postgresInit.image .Values.postgresCheckerInit.image .Values.keysInit.image) "global" .Values.global) -}}
+{{- end -}}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "selfservice.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "selfservice.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
-{{- end }}
+{{- define "sparSelfservice.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+{{- default (include "common.names.fullname" .) .Values.serviceAccount.name -}}
+{{- else -}}
+{{- default "default" .Values.serviceAccount.name -}}
+{{- end -}}
+{{- end -}}
 
-{{- define "selfservice.tpl" -}}
-{{- $value := typeIs "string" .value | ternary .value (.value | toYaml) }}
-{{- if contains "{{" (toJson .value) }}
-  {{- tpl $value .context }}
+{{/*
+Render Env values base
+*/}}
+{{- define "sparSelfservice.baseEnvVars" -}}
+{{- $context := .context -}}
+{{- range $k, $v := .envVars }}
+{{- if or (kindIs "int64" $v) (kindIs "float64" $v) (kindIs "bool" $v) }}
+- name: {{ $k }}
+  value: {{ $v | quote }}
+{{- else if kindIs "string" $v }}
+- name: {{ $k }}
+  value: {{ include "common.tplvalues.render" ( dict "value" $v "context" $context ) | squote }}
 {{- else }}
-    {{- $value }}
+{{- $vEnabled := "true" }}
+{{- if hasKey $v "enabled" }}
+{{- $vEnabled = kindIs "bool" $v.enabled | ternary ($v.enabled | squote) (include "common.tplvalues.render" (dict "value" $v.enabled "context" $context)) }}
+{{- $v = omit $v "enabled" }}
+{{- end }}
+{{- if eq $vEnabled "true" }}
+- name: {{ $k }}
+  valueFrom: {{- include "common.tplvalues.render" ( dict "value" $v "context" $context ) | nindent 4}}
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end -}}
 
 {{/*
-Render Env values section
+Render Selfservice API Env values
 */}}
-{{- define "selfservice.baseEnvVars" -}}
-{{- $context := .context -}}
-{{- range $k, $v := .envVars }}
-- name: {{ $k }}
-{{- if or (kindIs "int64" $v) (kindIs "float64" $v) (kindIs "bool" $v) }}
-  value: {{ $v | quote }}
-{{- else if kindIs "string" $v }}
-  value: {{ include "selfservice.tpl" (dict "value" $v "context" $context) | squote }}
-{{- else }}
-  valueFrom: {{- include "selfservice.tpl" (dict "value" $v "context" $context) | nindent 4}}
-{{- end }}
-{{- end }}
-{{- end -}}
-
-{{- define "selfservice.envVars" -}}
+{{- define "sparSelfservice.envVars" -}}
 {{- $envVars := merge (deepCopy .Values.envVars) (deepCopy .Values.envVarsFrom) -}}
-{{- include "selfservice.baseEnvVars" (dict "envVars" $envVars "context" $) }}
+{{- include "sparSelfservice.baseEnvVars" (dict "envVars" $envVars "context" $) }}
 {{- end -}}
 
 {{/*
 Render Postgres Init Env values
 */}}
-{{- define "selfservice.postgresInitEnvVars" -}}
-{{- $envVars := merge (deepCopy .Values.postgresInit.envVars) (deepCopy .Values.postgresInit.envVarsFrom) -}}
-{{- include "selfservice.baseEnvVars" (dict "envVars" $envVars "context" $) }}
+{{- define "sparSelfservice.postgresInit.envVars" -}}
+{{- $envVars := merge (deepCopy .Values.postgresInit.envVars) (deepCopy .Values.postgresInit.envVarsFrom) (deepCopy .Values.envVars) (deepCopy .Values.envVarsFrom) -}}
+{{- include "sparSelfservice.baseEnvVars" (dict "envVars" $envVars "context" $) }}
+{{- end }}
+
+{{/*
+Render Keys Init Env values
+*/}}
+{{- define "sparSelfservice.keysInit.envVars" -}}
+{{- $envVars := merge (deepCopy .Values.keysInit.envVars) (deepCopy .Values.keysInit.envVarsFrom) (deepCopy .Values.envVars) (deepCopy .Values.envVarsFrom) -}}
+{{- include "sparSelfservice.baseEnvVars" (dict "envVars" $envVars "context" $) }}
+{{- end }}
+
+{{/*
+Render Yaml List to Json string
+*/}}
+{{- define "sparSelfservice.yamlListToJsonString" -}}
+{{- $context := .context -}}
+{{- $list := .value -}}
+[{{- range $index, $user := $list }}
+{{- if eq (include "common.tplvalues.render" (dict "value" .enabled "context" $context)) "true" }}
+{{- eq $index 0 | ternary "" "," }}
+{{- include "common.tplvalues.render" (dict "value" (omit . "enabled") "context" $context) | fromYaml | toJson }}
+{{- end }}
+{{- end -}}]
 {{- end }}
