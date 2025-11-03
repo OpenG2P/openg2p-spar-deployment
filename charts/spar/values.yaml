@@ -46,14 +46,14 @@ spar-mapper-api:
   postgresql:
     enabled: false
   envVars:
-    SPAR_MAPPER_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
-    SPAR_MAPPER_OAUTH_TOKEN_URL: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/protocol/openid-connect/token'
+    SPAR_MAPPER_API_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
+    SPAR_MAPPER_API_OAUTH_TOKEN_URL: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/protocol/openid-connect/token'
     # TODO: Convert these to be stored in secret
-    SPAR_MAPPER_OAUTH_CLIENT_ID: '{{ tpl .Values.global.sparAuthClientId $ }}'
-    SPAR_MAPPER_OAUTH_CLIENT_SECRET: '{{ tpl .Values.global.sparAuthClientSecret $ }}'
-    SPAR_MAPPER_JWT_VERIFY_URL: 'http://{{ tpl .Values.global.sparKeymanagerInstallationName $ }}/v1/keymanager/jwtVerify'
+    SPAR_MAPPER_API_OAUTH_CLIENT_ID: '{{ tpl .Values.global.sparAuthClientId $ }}'
+    SPAR_MAPPER_API_OAUTH_CLIENT_SECRET: '{{ tpl .Values.global.sparAuthClientSecret $ }}'
+    SPAR_MAPPER_API_JWT_VERIFY_URL: 'http://{{ tpl .Values.global.sparKeymanagerInstallationName $ }}/v1/keymanager/jwtVerify'
   envVarsFrom:
-    SPAR_MAPPER_DB_PASSWORD:
+    SPAR_MAPPER_API_DB_PASSWORD:
       secretKeyRef:
         name: '{{ .Release.Name }}-postgresql'
 
