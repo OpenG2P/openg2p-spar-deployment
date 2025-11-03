@@ -30,7 +30,7 @@ envVars:
   PBMS_BENE_PORTAL_API_DB_HOSTNAME_PBMS: "{{ .Values.global.pbmsDbHostname | default "localhost" }}"
   PBMS_BENE_PORTAL_API_DB_PORT_PBMS: "{{ .Values.global.pbmsDbPort | default "5432" }}"
   PBMS_BENE_PORTAL_API_DB_DBNAME_PBMS: "{{ .Values.global.pbmsDbName | default "pbmsdb" }}"
-  
+
   # Background Task Database (BG_TASK)
   PBMS_BENE_PORTAL_API_DB_USERNAME_BG_TASK: "{{ .Values.global.bgTaskDbUsername | default "postgres" }}"
   PBMS_BENE_PORTAL_API_DB_HOSTNAME_BG_TASK: "{{ .Values.global.bgTaskDbHostname | default "localhost" }}"
