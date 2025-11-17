@@ -13,13 +13,13 @@ nameOverride: ""
 fullnameOverride: ""
 
 envVars:
-  SPAR_MAPPER_DB_HOSTNAME: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
-  SPAR_MAPPER_DB_USERNAME: "sparuser"
-  SPAR_MAPPER_DB_DBNAME: "spardb"
-  SPAR_MAPPER_OPENAPI_ROOT_PATH: "/api/mapper"
+  SPAR_MAPPER_API_DB_HOSTNAME: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
+  SPAR_MAPPER_API_DB_USERNAME: "sparuser"
+  SPAR_MAPPER_API_DB_DBNAME: "spardb"
+  SPAR_MAPPER_API_OPENAPI_ROOT_PATH: "/api/mapper"
 
 envVarsFrom:
-  SPAR_MAPPER_DB_PASSWORD:
+  SPAR_MAPPER_API_DB_PASSWORD:
     secretKeyRef:
       name: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
       key: password
@@ -100,7 +100,7 @@ postgresCheckerInit:
   command:
   - 'sh'
   - '-c'
-  - 'until pg_isready -U ${SPAR_MAPPER_DB_USERNAME} -h ${SPAR_MAPPER_DB_HOSTNAME} -p ${SPAR_MAPPER_DB_PORT:-5432} -d ${SPAR_MAPPER_DB_DBNAME:-spar_db}; do sleep 3; done'
+  - 'until pg_isready -U ${SPAR_MAPPER_API_DB_USERNAME} -h ${SPAR_MAPPER_API_DB_HOSTNAME} -p ${SPAR_MAPPER_API_DB_PORT:-5432} -d ${SPAR_MAPPER_API_DB_DBNAME:-spar_db}; do sleep 3; done'
 
 ingress:
   enabled: false
