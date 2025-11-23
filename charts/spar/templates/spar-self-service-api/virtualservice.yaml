@@ -1,0 +1,31 @@
+{{- $values := index .Values "spar-self-service-api" -}}
+{{- $global := .Values.global -}}
+{{- $scope := dict "Values" $values "Release" .Release "Chart" .Chart "Template" .Template "Capabilities" .Capabilities "Files" .Files -}}
+{{- if $values.istio.enabled }}
+{{- if $values.istio.virtualservice.enabled }}
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ include "selfservice.fullname" . }}
+  labels:
+    {{- include "selfservice.labels" . | nindent 4 }}
+spec:
+  hosts:
+  - {{ default $global.sparHostname $values.istio.virtualservice.host | quote }}
+  gateways:
+  - {{ default (include "selfservice.fullname" .) $values.istio.virtualservice.gateway }}
+  http:
+  - match:
+    - uri:
+        prefix: {{ tpl $values.istio.virtualservice.prefix $scope }}
+    {{- if $values.istio.virtualservice.rewriteUri }}
+    rewrite:
+      uri: {{ tpl $values.istio.virtualservice.rewriteUri $scope }}
+    {{- end }}
+    route:
+    - destination:
+        host: {{ tpl $values.istio.virtualservice.destination $scope }}
+        port:
+          number: {{ tpl $values.istio.virtualservice.destinationPort $scope }}
+{{- end }}
+{{- end }}

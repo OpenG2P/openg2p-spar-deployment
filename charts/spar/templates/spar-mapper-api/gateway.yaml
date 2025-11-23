@@ -1,0 +1,38 @@
+{{- $values := index .Values "spar-mapper-api" -}}
+{{- $global := .Values.global -}}
+{{- if $values.istio.enabled  }}
+{{- if $values.istio.gateway.enabled  }}
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: {{ include "mapper.fullname" . }}
+  labels:
+    {{- include "mapper.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- toYaml $values.istio.gateway.ingressController | nindent 4 }}
+  servers:
+  {{- if $values.istio.gateway.httpEnabled }}
+  - port:
+      name: http2
+      number: 8080
+      protocol: HTTP2
+    hosts:
+      - {{ default $global.sparHostname $values.istio.gateway.host | quote }}
+    {{- if $values.istio.gateway.httpTlsRedirect }}
+    tls:
+      httpsRedirect: true
+    {{- end }}
+  {{- end }}
+  {{- if $values.istio.gateway.httpsEnabled }}
+  - port:
+      name: https
+      number: 8443
+      protocol: HTTPS
+    hosts:
+      - {{ default $global.sparHostname $values.istio.gateway.host | quote }}
+    tls:
+      {{- toYaml (omit $values.istio.gateway.tls "enabled") | nindent 6 }}
+  {{- end }}
+{{- end }}
+{{- end }}

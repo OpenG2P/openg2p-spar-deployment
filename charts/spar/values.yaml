@@ -10,6 +10,19 @@ global:
   keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
   sparKeymanagerInstallationName: '{{ .Release.Name }}-keymanager'
 
+  # Bene Portal API Globals
+  benePortalHostname: bene-portal-api.sandbox.openg2p.net
+  pbmsDbUsername: "postgres"
+  pbmsDbHostname: "localhost"
+  pbmsDbPort: "5432"
+  pbmsDbName: "pbmsdb"
+  pbmsDbSecretName: "pbms-db-secret"
+  bgTaskDbUsername: "postgres"
+  bgTaskDbHostname: "localhost"
+  bgTaskDbPort: "5432"
+  bgTaskDbName: "bgtaskdb"
+  bgTaskDbSecretName: "bgtask-db-secret"
+
 postgresql:
   enabled: true
   auth:
@@ -41,42 +54,6 @@ postgresql:
         mode: SIMPLE
         credentialName: ""
 
-spar-mapper-api:
-  enabled: true
-  postgresql:
-    enabled: false
-  envVars:
-    SPAR_MAPPER_API_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
-    SPAR_MAPPER_API_OAUTH_TOKEN_URL: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/protocol/openid-connect/token'
-    # TODO: Convert these to be stored in secret
-    SPAR_MAPPER_API_OAUTH_CLIENT_ID: '{{ tpl .Values.global.sparAuthClientId $ }}'
-    SPAR_MAPPER_API_OAUTH_CLIENT_SECRET: '{{ tpl .Values.global.sparAuthClientSecret $ }}'
-    SPAR_MAPPER_API_JWT_VERIFY_URL: 'http://{{ tpl .Values.global.sparKeymanagerInstallationName $ }}/v1/keymanager/jwtVerify'
-  envVarsFrom:
-    SPAR_MAPPER_API_DB_PASSWORD:
-      secretKeyRef:
-        name: '{{ .Release.Name }}-postgresql'
-
-spar-self-service-api:
-  enabled: true
-  postgresql:
-    enabled: false
-  envVars:
-    SPAR_SELFSERVICE_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
-    SPAR_SELFSERVICE_MAPPER_API_URL: 'http://{{ .Release.Name }}-spar-mapper-api/sync'
-    SPAR_SELFSERVICE_AUTH_DEFAULT_ISSUERS: '["{{ .Values.global.esignetBaseUrl }}"]'
-    SPAR_SELFSERVICE_AUTH_DEFAULT_JWKS_URLS: '["{{ .Values.global.esignetBaseUrl }}/.well-known/jwks.json"]'
-  envVarsFrom:
-    SPAR_SELFSERVICE_DB_PASSWORD:
-      secretKeyRef:
-        name: '{{ .Release.Name }}-postgresql'
-  postgresInit:
-    hookAnnotations:
-      "helm.sh/hook-weight": "0"
-
-spar-self-service-ui:
-  enabled: true
-
 keymanager:
   enabled: true
   hostname: keymanager-spar.openg2p.sandbox.net
@@ -96,3 +73,449 @@ keymanager:
   keygen:
     commonAnnotations:
       "helm.sh/hook-weight": "1"
+
+bene-portal-api:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: openg2p/openg2p-pbms-bene-portal-api
+    pullPolicy: Always
+    tag: "1.1.0"
+  imagePullSecrets: []
+  nameOverride: ""
+  fullnameOverride: ""
+  envVars:
+    PBMS_BENE_PORTAL_API_DB_USERNAME_PBMS: "{{ .Values.global.pbmsDbUsername | default \"postgres\" }}"
+    PBMS_BENE_PORTAL_API_DB_HOSTNAME_PBMS: "{{ .Values.global.pbmsDbHostname | default \"localhost\" }}"
+    PBMS_BENE_PORTAL_API_DB_PORT_PBMS: "{{ .Values.global.pbmsDbPort | default \"5432\" }}"
+    PBMS_BENE_PORTAL_API_DB_DBNAME_PBMS: "{{ .Values.global.pbmsDbName | default \"pbmsdb\" }}"
+    PBMS_BENE_PORTAL_API_DB_USERNAME_BG_TASK: "{{ .Values.global.bgTaskDbUsername | default \"postgres\" }}"
+    PBMS_BENE_PORTAL_API_DB_HOSTNAME_BG_TASK: "{{ .Values.global.bgTaskDbHostname | default \"localhost\" }}"
+    PBMS_BENE_PORTAL_API_DB_PORT_BG_TASK: "{{ .Values.global.bgTaskDbPort | default \"5432\" }}"
+    PBMS_BENE_PORTAL_API_DB_DBNAME_BG_TASK: "{{ .Values.global.bgTaskDbName | default \"bgtaskdb\" }}"
+  envVarsFrom:
+    PBMS_BENE_PORTAL_API_DB_PASSWORD_PBMS:
+      secretKeyRef:
+        name: "{{ .Values.global.pbmsDbSecretName | default \"pbms-db-secret\" }}"
+        key: password
+    PBMS_BENE_PORTAL_API_DB_PASSWORD_BG_TASK:
+      secretKeyRef:
+        name: "{{ .Values.global.bgTaskDbSecretName | default \"bgtask-db-secret\" }}"
+        key: password
+  containerPort: 8000
+  service:
+    type: ClusterIP
+    port: 80
+  resources: {}
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 1
+    targetCPUUtilizationPercentage: 80
+  readinessProbe:
+    httpGet:
+      path: /ping
+      port: 8000
+    failureThreshold: 20
+    periodSeconds: 30
+    timeoutSeconds: 10
+    initialDelaySeconds: 30
+  livenessProbe:
+    httpGet:
+      path: /ping
+      port: 8000
+    initialDelaySeconds: 15
+    periodSeconds: 60
+    failureThreshold: 5
+  serviceAccount:
+    create: false
+    annotations: {}
+    name: ""
+  podAnnotations:
+    helm.sh/revision: '{{ .Release.Revision }}'
+  podSecurityContext: {}
+  containerSecurityContext: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  updateStrategy:
+    type: RollingUpdate
+  command: []
+  args: []
+  postgresCheckerInit:
+    enabled: true
+    image: jbergknoff/postgresql-client
+    command:
+    - 'sh'
+    - '-c'
+    - |
+        until pg_isready -U "${PBMS_BENE_PORTAL_API_DB_USERNAME_PBMS}" -h "${PBMS_BENE_PORTAL_API_DB_HOSTNAME_PBMS}" -p "${PBMS_BENE_PORTAL_API_DB_PORT_PBMS:-5432}" -d "${PBMS_BENE_PORTAL_API_DB_DBNAME_PBMS}"; do
+          echo "PBMS database not ready, waiting..."
+          sleep 3
+        done
+        until pg_isready -U "${PBMS_BENE_PORTAL_API_DB_USERNAME_BG_TASK}" -h "${PBMS_BENE_PORTAL_API_DB_HOSTNAME_BG_TASK}" -p "${PBMS_BENE_PORTAL_API_DB_PORT_BG_TASK:-5432}" -d "${PBMS_BENE_PORTAL_API_DB_DBNAME_BG_TASK}"; do
+          echo "BG_TASK database not ready, waiting..."
+          sleep 3
+        done
+  ingress:
+    enabled: false
+    className: ""
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      kubernetes.io/ingress.class: nginx
+    hosts:
+      - host: ""
+        paths:
+          - path: /api/bene-portal(/|$)(.*)
+            pathType: ImplementationSpecific
+    tls: []
+  istio:
+    enabled: true
+    virtualservice:
+      enabled: true
+      host: ""
+      gateway: "internal"
+      destination: '{{ include "beneportal.fullname" . }}'
+      destinationPort: '{{ .Values.service.port }}'
+      prefix: /api/bene-portal/
+      rewriteUri: "/"
+    gateway:
+      enabled: false
+      host: ""
+      ingressController:
+        istio: ingressgateway
+      httpTlsRedirect: true
+      httpEnabled: true
+      httpsEnabled: false
+      tls:
+        mode: SIMPLE
+        credentialName: ""
+
+spar-mapper-api:
+  enabled: true
+  postgresql:
+    enabled: false
+  replicaCount: 1
+  image:
+    repository: openg2p/openg2p-spar-mapper-api
+    pullPolicy: Always
+    tag: "1.1.0"
+  imagePullSecrets: []
+  nameOverride: ""
+  fullnameOverride: ""
+  envVars:
+    SPAR_MAPPER_API_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
+    SPAR_MAPPER_API_OAUTH_TOKEN_URL: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/protocol/openid-connect/token'
+    # TODO: Convert these to be stored in secret
+    SPAR_MAPPER_API_OAUTH_CLIENT_ID: '{{ tpl .Values.global.sparAuthClientId $ }}'
+    SPAR_MAPPER_API_OAUTH_CLIENT_SECRET: '{{ tpl .Values.global.sparAuthClientSecret $ }}'
+    SPAR_MAPPER_API_JWT_VERIFY_URL: 'http://{{ tpl .Values.global.sparKeymanagerInstallationName $ }}/v1/keymanager/jwtVerify'
+    SPAR_MAPPER_API_DB_USERNAME: "sparuser"
+    SPAR_MAPPER_API_DB_DBNAME: "spardb"
+    SPAR_MAPPER_API_OPENAPI_ROOT_PATH: "/api/mapper"
+  envVarsFrom:
+    SPAR_MAPPER_API_DB_PASSWORD:
+      secretKeyRef:
+        name: '{{ .Release.Name }}-postgresql'
+        key: password
+  containerPort: 8000
+  service:
+    type: ClusterIP
+    port: 80
+  resources: {}
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 1
+    targetCPUUtilizationPercentage: 80
+  readinessProbe:
+    httpGet:
+      path: /ping
+      port: 8000
+    failureThreshold: 20
+    periodSeconds: 30
+    timeoutSeconds: 10
+    initialDelaySeconds: 30
+  livenessProbe:
+    httpGet:
+      path: /ping
+      port: 8000
+    initialDelaySeconds: 15
+    periodSeconds: 60
+    failureThreshold: 5
+  serviceAccount:
+    create: false
+    annotations: {}
+    name: ""
+  podAnnotations:
+    helm.sh/revision: '{{ .Release.Revision }}'
+  podSecurityContext: {}
+  containerSecurityContext: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  updateStrategy:
+    type: RollingUpdate
+  command: []
+  args: []
+  postgresCheckerInit:
+    enabled: true
+    image: jbergknoff/postgresql-client
+    command:
+    - 'sh'
+    - '-c'
+    - 'until pg_isready -U ${SPAR_MAPPER_API_DB_USERNAME} -h ${SPAR_MAPPER_API_DB_HOSTNAME} -p ${SPAR_MAPPER_API_DB_PORT:-5432} -d ${SPAR_MAPPER_API_DB_DBNAME:-spar_db}; do sleep 3; done'
+  ingress:
+    enabled: false
+    className: ""
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      kubernetes.io/ingress.class: nginx
+    hosts:
+      - host: ""
+        paths:
+          - path: /api/mapper(/|$)(.*)
+            pathType: ImplementationSpecific
+    tls: []
+  istio:
+    enabled: true
+    virtualservice:
+      enabled: true
+      host: ""
+      gateway: "internal"
+      destination: '{{ include "mapper.fullname" . }}'
+      destinationPort: '{{ .Values.service.port }}'
+      prefix: /api/mapper/
+      rewriteUri: "/"
+    gateway:
+      enabled: false
+      host: ""
+      ingressController:
+        istio: ingressgateway
+      httpTlsRedirect: true
+      httpEnabled: true
+      httpsEnabled: false
+      tls:
+        mode: SIMPLE
+        credentialName: ""
+
+spar-self-service-ui:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: openg2p/openg2p-spar-self-service-ui
+    pullPolicy: Always
+    tag: "1.1.0"
+  imagePullSecrets: []
+  nameOverride: ""
+  fullnameOverride: ""
+  envVars:
+    NEXT_PUBLIC_BASE_PATH: /selfservice
+    NEXT_PUBLIC_BASE_API_PATH: /api/selfservice
+  envVarsFrom: {}
+  containerPort: 3000
+  service:
+    type: ClusterIP
+    port: 80
+  resources: {}
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 1
+    targetCPUUtilizationPercentage: 80
+  readinessProbe:
+    httpGet:
+      path: /selfservice
+      port: 3000
+    failureThreshold: 20
+    periodSeconds: 30
+    timeoutSeconds: 10
+    initialDelaySeconds: 30
+  livenessProbe:
+    httpGet:
+      path: /selfservice
+      port: 3000
+    initialDelaySeconds: 15
+    periodSeconds: 60
+    failureThreshold: 5
+  serviceAccount:
+    create: false
+    annotations: {}
+    name: ""
+  podAnnotations:
+    helm.sh/revision: '{{ .Release.Revision }}'
+  podSecurityContext: {}
+  containerSecurityContext: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  updateStrategy:
+    type: RollingUpdate
+  command: []
+  args: []
+  ingress:
+    enabled: false
+    className: ""
+    annotations:
+      kubernetes.io/ingress.class: nginx
+    hosts:
+      - host: ""
+        paths:
+          - path: /selfservice
+            pathType: ImplementationSpecific
+    tls: []
+  istio:
+    enabled: true
+    virtualservice:
+      enabled: true
+      host: ""
+      gateway: "internal"
+      destination: '{{ include "selfserviceUi.fullname" . }}'
+      destinationPort: '{{ .Values.service.port }}'
+      prefix: /selfservice
+      rewriteUri: ""
+    gateway:
+      enabled: false
+      host: ""
+      ingressController:
+        istio: ingressgateway
+      httpTlsRedirect: true
+      httpEnabled: true
+      httpsEnabled: false
+      tls:
+        mode: SIMPLE
+        credentialName: ""
+
+spar-self-service-api:
+  enabled: true
+  postgresql:
+    enabled: false
+  replicaCount: 1
+  image:
+    repository: openg2p/openg2p-spar-self-service-api
+    pullPolicy: Always
+    tag: "1.1.0"
+  imagePullSecrets: []
+  nameOverride: ""
+  fullnameOverride: ""
+  envVars:
+    SPAR_SELFSERVICE_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
+    SPAR_SELFSERVICE_MAPPER_API_URL: 'http://{{ .Release.Name }}-spar-mapper-api/sync'
+    SPAR_SELFSERVICE_AUTH_DEFAULT_ISSUERS: '["{{ .Values.global.esignetBaseUrl }}"]'
+    SPAR_SELFSERVICE_AUTH_DEFAULT_JWKS_URLS: '["{{ .Values.global.esignetBaseUrl }}/.well-known/jwks.json"]'
+    SPAR_SELFSERVICE_DB_USERNAME: "sparuser"
+    SPAR_SELFSERVICE_DB_DBNAME: "spardb"
+    SPAR_SELFSERVICE_OPENAPI_ROOT_PATH: "/api/selfservice"
+    SPAR_SELFSERVICE_DEFAULT_ID_TOKEN_VERIFY_AT_HASH: "false"
+  envVarsFrom:
+    SPAR_SELFSERVICE_DB_PASSWORD:
+      secretKeyRef:
+        name: '{{ .Release.Name }}-postgresql'
+  containerPort: 8000
+  service:
+    type: ClusterIP
+    port: 80
+  resources: {}
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 1
+    targetCPUUtilizationPercentage: 80
+  readinessProbe:
+    httpGet:
+      path: /ping
+      port: 8000
+    failureThreshold: 20
+    periodSeconds: 30
+    timeoutSeconds: 10
+    initialDelaySeconds: 30
+  livenessProbe:
+    httpGet:
+      path: /ping
+      port: 8000
+    initialDelaySeconds: 15
+    periodSeconds: 60
+    failureThreshold: 5
+  serviceAccount:
+    create: false
+    annotations: {}
+    name: ""
+  podAnnotations:
+    helm.sh/revision: '{{ .Release.Revision }}'
+  podSecurityContext: {}
+  containerSecurityContext: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  updateStrategy:
+    type: RollingUpdate
+  command: []
+  args: []
+  postgresCheckerInit:
+    enabled: true
+    image: jbergknoff/postgresql-client
+    command:
+    - 'sh'
+    - '-c'
+    - 'until pg_isready -U ${SPAR_SELFSERVICE_DB_USERNAME} -h ${SPAR_SELFSERVICE_DB_HOSTNAME} -p ${SPAR_SELFSERVICE_DB_PORT:-5432} -d ${SPAR_SELFSERVICE_DB_DBNAME:-spar_db}; do sleep 3; done'
+  ingress:
+    enabled: false
+    className: ""
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      kubernetes.io/ingress.class: nginx
+    hosts:
+      - host: ""
+        paths:
+          - path: /api/selfservice(/|$)(.*)
+            pathType: ImplementationSpecific
+    tls: []
+  istio:
+    enabled: true
+    virtualservice:
+      enabled: true
+      host: ""
+      gateway: "internal"
+      destination: '{{ include "selfservice.fullname" . }}'
+      destinationPort: '{{ .Values.service.port }}'
+      prefix: /api/selfservice/
+      rewriteUri: "/"
+    gateway:
+      enabled: false
+      host: ""
+      ingressController:
+        istio: ingressgateway
+      httpTlsRedirect: true
+      httpEnabled: true
+      httpsEnabled: false
+      tls:
+        mode: SIMPLE
+        credentialName: ""
+  postgresInit:
+    enabled: true
+    image: jbergknoff/postgresql-client
+    imagePullPolicy: Always
+    restartPolicy: Never
+    envVars:
+      GIT_REPO_URL: 'https://github.com/openg2p/openg2p-spar-self-service'
+      GIT_BRANCH: 'develop'
+      WAIT_BEFORE_STARTUP: 10s
+    envVarsFrom: {}
+    backoffLimit: 1
+    command:
+    - sh
+    - -c
+    - >-
+      sleep $WAIT_BEFORE_STARTUP;
+      apk --no-cache add bash gettext git;
+      export DB_HOST=$SPAR_SELFSERVICE_DB_HOSTNAME;
+      export DB_USER=$SPAR_SELFSERVICE_DB_USERNAME;
+      export DB_USER_PASSWORD=$SPAR_SELFSERVICE_DB_PASSWORD;
+      git_repo_name="$(basename "$GIT_REPO_URL" .git)";
+      git clone --depth 1 --branch $GIT_BRANCH $GIT_REPO_URL &&
+      cd $git_repo_name/db_scripts &&
+      ./deploy.sh
+    hookAnnotations:
+      "helm.sh/hook": post-install,post-upgrade
+      "helm.sh/hook-weight": "0"
+      "helm.sh/hook-delete-policy": before-hook-creation
