@@ -1,15 +1,14 @@
 global:
   sparHostname: spar.sandbox.openg2p.net
-
+  
   sparAuthClientId: 'openg2p-spar'
   sparAuthClientSecret: ''
-
+  
   esignetBaseUrl: https://esignet.sandbox.openg2p.net
-
+  
   keycloakBaseUrl: https://keycloak.openg2p.sandbox.net
   keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
-  sparKeymanagerInstallationName: '{{ .Release.Name }}-keymanager'
-
+  
   # Bene Portal API Globals
   benePortalHostname: bene-portal-api.sandbox.openg2p.net
   pbmsDbUsername: "postgres"
@@ -22,6 +21,8 @@ global:
   bgTaskDbPort: "5432"
   bgTaskDbName: "bgtaskdb"
   bgTaskDbSecretName: "bgtask-db-secret"
+
+keymanagerInstallationName: openg2p-commons-keymanager
 
 postgresql:
   enabled: true
@@ -53,26 +54,6 @@ postgresql:
         enabled: false
         mode: SIMPLE
         credentialName: ""
-
-keymanager:
-  enabled: true
-  hostname: keymanager-spar.openg2p.sandbox.net
-  springConfig:
-    names: application,kernel
-    profile: default
-    gitRepo:
-      enabled: true
-      repoUrl: https://github.com/openg2p/mosip-config
-      branch: master
-    rawConfig: ""
-  envVars:
-    auth_server_admin_allowed_audience: 'openg2p-sr,openg2p-sr-{{ .Release.Namespace }},openg2p-pbms,openg2p-pbms-{{ .Release.Namespace }},openg2p-spar-{{ .Release.Namespace }}'
-  postgresInit:
-    commonAnnotations:
-      "helm.sh/hook-weight": "0"
-  keygen:
-    commonAnnotations:
-      "helm.sh/hook-weight": "1"
 
 bene-portal-api:
   enabled: true
@@ -209,7 +190,7 @@ spar-mapper-api:
     # TODO: Convert these to be stored in secret
     SPAR_MAPPER_API_OAUTH_CLIENT_ID: '{{ tpl .Values.global.sparAuthClientId $ }}'
     SPAR_MAPPER_API_OAUTH_CLIENT_SECRET: '{{ tpl .Values.global.sparAuthClientSecret $ }}'
-    SPAR_MAPPER_API_JWT_VERIFY_URL: 'http://{{ tpl .Values.global.sparKeymanagerInstallationName $ }}/v1/keymanager/jwtVerify'
+    SPAR_MAPPER_API_JWT_VERIFY_URL: 'http://{{ .Values.keymanagerInstallationName }}/v1/keymanager/jwtVerify'
     SPAR_MAPPER_API_DB_USERNAME: "sparuser"
     SPAR_MAPPER_API_DB_DBNAME: "spardb"
     SPAR_MAPPER_API_OPENAPI_ROOT_PATH: "/api/mapper"
