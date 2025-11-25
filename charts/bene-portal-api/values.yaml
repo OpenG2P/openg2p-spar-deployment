@@ -1,52 +1,35 @@
 global:
-  benePortalHostname: bene-portal-api.sandbox.openg2p.net
+  benePortalHostname: spar-bene-portal.openg2p.sandbox.net
 
-  pbmsDbUsername: "postgres"
-  pbmsDbHostname: "localhost"
-  pbmsDbPort: "5432"
-  pbmsDbName: "pbmsdb"
-  pbmsDbSecretName: "pbms-db-secret"
-
-  bgTaskDbUsername: "postgres"
-  bgTaskDbHostname: "localhost"
-  bgTaskDbPort: "5432"
-  bgTaskDbName: "bgtaskdb"
-  bgTaskDbSecretName: "bgtask-db-secret"
+  sparDbUsername: "postgres"
+  sparDbHostname: "spar-postgresql"
+  sparDbPort: "5432"
+  sparDbName: "spardb"
+  sparDbSecretName: "spar-postgresql"
 
 replicaCount: 1
 image:
-  repository: openg2p/openg2p-pbms-bene-portal-api
+  repository: openg2p/openg2p-spar-bene-portal-api
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "1.1.0"
+  tag: "2.0.0"
 
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-envVars:
-  # PBMS Database (PBMS)
-  PBMS_BENE_PORTAL_API_DB_USERNAME_PBMS: "{{ .Values.global.pbmsDbUsername | default "postgres" }}"
-  PBMS_BENE_PORTAL_API_DB_HOSTNAME_PBMS: "{{ .Values.global.pbmsDbHostname | default "localhost" }}"
-  PBMS_BENE_PORTAL_API_DB_PORT_PBMS: "{{ .Values.global.pbmsDbPort | default "5432" }}"
-  PBMS_BENE_PORTAL_API_DB_DBNAME_PBMS: "{{ .Values.global.pbmsDbName | default "pbmsdb" }}"
+openapiRootPath: /api/bene-portal
 
-  # Background Task Database (BG_TASK)
-  PBMS_BENE_PORTAL_API_DB_USERNAME_BG_TASK: "{{ .Values.global.bgTaskDbUsername | default "postgres" }}"
-  PBMS_BENE_PORTAL_API_DB_HOSTNAME_BG_TASK: "{{ .Values.global.bgTaskDbHostname | default "localhost" }}"
-  PBMS_BENE_PORTAL_API_DB_PORT_BG_TASK: "{{ .Values.global.bgTaskDbPort | default "5432" }}"
-  PBMS_BENE_PORTAL_API_DB_DBNAME_BG_TASK: "{{ .Values.global.bgTaskDbName | default "bgtaskdb" }}"
+envVars:
+  SPAR_BENE_PORTAL_API_DB_DBNAME: {{ .Values.sparDbName }}
+  SPAR_BENE_PORTAL_API_DB_HOSTNAME: '{{ tpl .Values.postgresqlInstallationName $ }}'
+  SPAR_BENE_PORTAL_API_DB_PORT: {{ .Values.sparDbPort }}
+  SPAR_BENE_PORTAL_API_DB_USERNAME: {{ .Values.sparDbUsername }}
 
 envVarsFrom:
-  # PBMS Database (PBMS) password
-  PBMS_BENE_PORTAL_API_DB_PASSWORD_PBMS:
+  SPAR_BENE_PORTAL_API_DB_PASSWORD:
     secretKeyRef:
-      name: "{{ .Values.global.pbmsDbSecretName | default "pbms-db-secret" }}"
-      key: password
-  # Background Task Database (BG_TASK) password
-  PBMS_BENE_PORTAL_API_DB_PASSWORD_BG_TASK:
-    secretKeyRef:
-      name: "{{ .Values.global.bgTaskDbSecretName | default "bgtask-db-secret" }}"
+      name: '{{ tpl .Values.postgresqlInstallationName $ }}'
       key: password
 
 containerPort: 8000
@@ -83,6 +66,17 @@ livenessProbe:
   initialDelaySeconds: 15
   periodSeconds: 60
   failureThreshold: 5
+
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /ping
+    port: 8000
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30
+  successThreshold: 1
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -125,15 +119,7 @@ postgresCheckerInit:
   command:
   - 'sh'
   - '-c'
-  - |
-      until pg_isready -U "${PBMS_BENE_PORTAL_API_DB_USERNAME_PBMS}" -h "${PBMS_BENE_PORTAL_API_DB_HOSTNAME_PBMS}" -p "${PBMS_BENE_PORTAL_API_DB_PORT_PBMS:-5432}" -d "${PBMS_BENE_PORTAL_API_DB_DBNAME_PBMS}"; do
-        echo "PBMS database not ready, waiting..."
-        sleep 3
-      done
-      until pg_isready -U "${PBMS_BENE_PORTAL_API_DB_USERNAME_BG_TASK}" -h "${PBMS_BENE_PORTAL_API_DB_HOSTNAME_BG_TASK}" -p "${PBMS_BENE_PORTAL_API_DB_PORT_BG_TASK:-5432}" -d "${PBMS_BENE_PORTAL_API_DB_DBNAME_BG_TASK}"; do
-        echo "BG_TASK database not ready, waiting..."
-        sleep 3
-      done
+  - 'until pg_isready -U ${SPAR_BENE_PORTAL_API_DB_USERNAME} -h ${SPAR_BENE_PORTAL_API_DB_HOSTNAME} -p ${SPAR_BENE_PORTAL_API_DB_PORT:-5432} -d ${SPAR_BENE_PORTAL_API_DB_DBNAME:-spardb}; do sleep 3; done'
 
 ingress:
   enabled: false
@@ -156,11 +142,11 @@ istio:
   enabled: true
   virtualservice:
     enabled: true
-    host: ""
+    host: "spar-bene-portal.openg2p.sandbox.net"
     gateway: "internal"
     destination: '{{ include "beneportal.fullname" . }}'
     destinationPort: '{{ .Values.service.port }}'
-    prefix: /api/bene-portal/
+    prefix: '{{ tpl .Values.openapiRootPath $ }}/'
     rewriteUri: "/"
   gateway:
     enabled: false
@@ -173,3 +159,5 @@ istio:
     tls:
       mode: SIMPLE
       credentialName: ""
+
+postgresqlInstallationName: '{{ .Release.Name }}-postgresql'

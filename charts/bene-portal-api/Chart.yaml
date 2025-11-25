@@ -1,6 +1,18 @@
 apiVersion: v2
-name: bene-portal-api
-description: A Helm chart for OpenG2P Beneficiary Portal API
+name: openg2p-spar-bene-portal-api
+description: A Helm chart for OpenG2P Spar Beneficiary Portal API
 type: application
-version: 1.1.0
+version: 2.0.0
+dependencies:
+- name: common
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 2.x.x
+keywords:
+  - openg2p-spar
+  - openg2p-spar-bene-portal-api
+maintainers:
+  - email: info@openg2p.org
+    name: OpenG2P
 icon: https://openg2p.github.io/openg2p-helm/openg2p-logo.png
+annotations:
+  catalog.cattle.io/display-name: "OpenG2P Spar Beneficiary Portal API"
