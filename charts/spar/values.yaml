@@ -8,19 +8,6 @@ global:
   
   keycloakBaseUrl: https://keycloak.openg2p.sandbox.net
   keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
-  
-  # Bene Portal API Globals
-  benePortalHostname: bene-portal-api.sandbox.openg2p.net
-  pbmsDbUsername: "postgres"
-  pbmsDbHostname: "localhost"
-  pbmsDbPort: "5432"
-  pbmsDbName: "pbmsdb"
-  pbmsDbSecretName: "pbms-db-secret"
-  bgTaskDbUsername: "postgres"
-  bgTaskDbHostname: "localhost"
-  bgTaskDbPort: "5432"
-  bgTaskDbName: "bgtaskdb"
-  bgTaskDbSecretName: "bgtask-db-secret"
 
 keymanagerInstallationName: openg2p-commons-keymanager
 
@@ -59,29 +46,21 @@ bene-portal-api:
   enabled: true
   replicaCount: 1
   image:
-    repository: openg2p/openg2p-pbms-bene-portal-api
+    repository: openg2p/openg2p-spar-bene-portal-api
     pullPolicy: Always
-    tag: "1.1.0"
+    tag: "2.0.0"
   imagePullSecrets: []
   nameOverride: ""
   fullnameOverride: ""
   envVars:
-    PBMS_BENE_PORTAL_API_DB_USERNAME_PBMS: "{{ .Values.global.pbmsDbUsername | default \"postgres\" }}"
-    PBMS_BENE_PORTAL_API_DB_HOSTNAME_PBMS: "{{ .Values.global.pbmsDbHostname | default \"localhost\" }}"
-    PBMS_BENE_PORTAL_API_DB_PORT_PBMS: "{{ .Values.global.pbmsDbPort | default \"5432\" }}"
-    PBMS_BENE_PORTAL_API_DB_DBNAME_PBMS: "{{ .Values.global.pbmsDbName | default \"pbmsdb\" }}"
-    PBMS_BENE_PORTAL_API_DB_USERNAME_BG_TASK: "{{ .Values.global.bgTaskDbUsername | default \"postgres\" }}"
-    PBMS_BENE_PORTAL_API_DB_HOSTNAME_BG_TASK: "{{ .Values.global.bgTaskDbHostname | default \"localhost\" }}"
-    PBMS_BENE_PORTAL_API_DB_PORT_BG_TASK: "{{ .Values.global.bgTaskDbPort | default \"5432\" }}"
-    PBMS_BENE_PORTAL_API_DB_DBNAME_BG_TASK: "{{ .Values.global.bgTaskDbName | default \"bgtaskdb\" }}"
+    SPAR_BENE_PORTAL_API_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
+    SPAR_BENE_PORTAL_API_DB_PORT: '5432'
+    SPAR_BENE_PORTAL_API_DB_DBNAME: 'spardb'
+    SPAR_BENE_PORTAL_API_DB_USERNAME: 'sparuser'
   envVarsFrom:
-    PBMS_BENE_PORTAL_API_DB_PASSWORD_PBMS:
+    SPAR_BENE_PORTAL_API_DB_PASSWORD:
       secretKeyRef:
-        name: "{{ .Values.global.pbmsDbSecretName | default \"pbms-db-secret\" }}"
-        key: password
-    PBMS_BENE_PORTAL_API_DB_PASSWORD_BG_TASK:
-      secretKeyRef:
-        name: "{{ .Values.global.bgTaskDbSecretName | default \"bgtask-db-secret\" }}"
+        name: '{{ .Release.Name }}-postgresql'
         key: password
   containerPort: 8000
   service:
@@ -129,15 +108,7 @@ bene-portal-api:
     command:
     - 'sh'
     - '-c'
-    - |
-        until pg_isready -U "${PBMS_BENE_PORTAL_API_DB_USERNAME_PBMS}" -h "${PBMS_BENE_PORTAL_API_DB_HOSTNAME_PBMS}" -p "${PBMS_BENE_PORTAL_API_DB_PORT_PBMS:-5432}" -d "${PBMS_BENE_PORTAL_API_DB_DBNAME_PBMS}"; do
-          echo "PBMS database not ready, waiting..."
-          sleep 3
-        done
-        until pg_isready -U "${PBMS_BENE_PORTAL_API_DB_USERNAME_BG_TASK}" -h "${PBMS_BENE_PORTAL_API_DB_HOSTNAME_BG_TASK}" -p "${PBMS_BENE_PORTAL_API_DB_PORT_BG_TASK:-5432}" -d "${PBMS_BENE_PORTAL_API_DB_DBNAME_BG_TASK}"; do
-          echo "BG_TASK database not ready, waiting..."
-          sleep 3
-        done
+    - 'until pg_isready -U ${SPAR_BENE_PORTAL_API_DB_USERNAME} -h ${SPAR_BENE_PORTAL_API_DB_HOSTNAME} -p ${SPAR_BENE_PORTAL_API_DB_PORT:-5432} -d ${SPAR_BENE_PORTAL_API_DB_DBNAME:-spardb}; do sleep 3; done'
   ingress:
     enabled: false
     className: ""
