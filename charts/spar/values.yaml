@@ -5,7 +5,7 @@ global:
   sparAuthClientSecret: ''
   
   esignetBaseUrl: https://esignet.sandbox.openg2p.net
-  
+
   keycloakBaseUrl: https://keycloak.openg2p.sandbox.net
   keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
 
@@ -87,6 +87,16 @@ bene-portal-api:
     initialDelaySeconds: 15
     periodSeconds: 60
     failureThreshold: 5
+  startupProbe:
+    enabled: true
+    httpGet:
+      path: /ping
+      port: 8000
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+    successThreshold: 1
   serviceAccount:
     create: false
     annotations: {}
@@ -195,6 +205,16 @@ spar-mapper-api:
     initialDelaySeconds: 15
     periodSeconds: 60
     failureThreshold: 5
+  startupProbe:
+    enabled: true
+    httpGet:
+      path: /ping
+      port: 8000
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+    successThreshold: 1
   serviceAccount:
     create: false
     annotations: {}
@@ -290,6 +310,16 @@ spar-self-service-ui:
     initialDelaySeconds: 15
     periodSeconds: 60
     failureThreshold: 5
+  startupProbe:
+    enabled: true
+    httpGet:
+      path: /selfservice
+      port: 3000
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+    successThreshold: 1
   serviceAccount:
     create: false
     annotations: {}
@@ -388,6 +418,16 @@ spar-self-service-api:
     initialDelaySeconds: 15
     periodSeconds: 60
     failureThreshold: 5
+  startupProbe:
+    enabled: true
+    httpGet:
+      path: /ping
+      port: 8000
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+    successThreshold: 1
   serviceAccount:
     create: false
     annotations: {}
