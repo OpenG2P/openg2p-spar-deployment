@@ -42,8 +42,7 @@ questions:
 # Keymanager
 - variable: keymanagerInstallationName
   description: |-
-    Internal service name of Keymanager 
+    Internal service name of Keymanager
   type: reference_service
   label: Keymanager Service Name
   group: Keymanager Settings
-

@@ -1,9 +1,9 @@
 global:
   sparHostname: spar.sandbox.openg2p.net
-  
+
   sparAuthClientId: 'openg2p-spar'
   sparAuthClientSecret: ''
-  
+
   esignetBaseUrl: https://esignet.sandbox.openg2p.net
 
   keycloakBaseUrl: https://keycloak.openg2p.sandbox.net
