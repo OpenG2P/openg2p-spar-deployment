@@ -1,46 +1,37 @@
 global:
-  sparHostname: spar.sandbox.openg2p.net
+  postgresqlHost: openg2p-commons-postgresql
+  sparDB: '{{ .Release.Name }}_db'
+  sparDBUser: '{{ .Release.Name }}_db_user'
+  sparDBSecret: '{{ .Release.Name }}'
+  sparDBUserPasswordKey: '{{ .Release.Name }}_db_user'
 
-  sparAuthClientId: 'openg2p-spar'
-  sparAuthClientSecret: ''
+keycloakBaseUrl: https://keycloak.openg2p.org
+keycloakIssuerUrl: '{{ tpl .Values.keycloakBaseUrl $ }}/realms/master'
 
-  esignetBaseUrl: https://esignet.sandbox.openg2p.net
+sparHostname: spar.sandbox.openg2p.net
 
-  keycloakBaseUrl: https://keycloak.openg2p.sandbox.net
-  keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
+sparAuthClientId: 'openg2p-spar'
+sparAuthClientSecret: ''
 
+esignetBaseUrl: https://esignet.sandbox.openg2p.net
+
+  # Internal service name of Keymanager
 keymanagerInstallationName: openg2p-commons-keymanager
 
-postgresql:
+postgres-init:
   enabled: true
-  auth:
-    username: sparuser
-    database: spardb
-  primary:
-    extendedConfiguration: |-
-      wal_level = logical
-      max_wal_senders = 20
-      max_replication_slots = 10
-
-  istio:
-    enabled: true
-    virtualservice:
-      enabled: true
-      host: "*"
-      gateway: ""
-      matchPort: 5432
-      destination: '{{ include "postgresql.v1.primary.fullname" .Subcharts.postgresql }}'
-      destinationPort: "5432"
-    gateway:
-      enabled: true
-      port: 5432
-      host: "*"
-      ingressController:
-        istio: ingressgateway
-      tls:
-        enabled: false
-        mode: SIMPLE
-        credentialName: ""
+  postgresql:
+    host: '{{ .Values.global.postgresqlHost }}'
+    port: 5432
+    # Hard coding. Same as one defined under Odoo
+    existingSecret: openg2p-commons-postgresql
+    existingSecretPostgresPasswordKey: postgres-password
+  databases:
+    # Same as db in Odoo
+    - name: '{{ tpl .Values.global.sparDB $ }}'
+      user: '{{ tpl .Values.global.sparDBUser $ }}'
+      secret: '{{ tpl .Values.global.sparDBSecret $ }}'
+      secretUserPasswordKey: '{{ tpl .Values.global.sparDBUserPasswordKey $ }}'
 
 bene-portal-api:
   enabled: true
@@ -53,15 +44,15 @@ bene-portal-api:
   nameOverride: ""
   fullnameOverride: ""
   envVars:
-    SPAR_BENE_PORTAL_API_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
+    SPAR_BENE_PORTAL_API_DB_HOSTNAME: '{{ .Values.global.postgresqlHost }}'
     SPAR_BENE_PORTAL_API_DB_PORT: '5432'
-    SPAR_BENE_PORTAL_API_DB_DBNAME: 'spardb'
-    SPAR_BENE_PORTAL_API_DB_USERNAME: 'sparuser'
+    SPAR_BENE_PORTAL_API_DB_DBNAME: '{{ .Values.global.sparDB }}'
+    SPAR_BENE_PORTAL_API_DB_USERNAME: '{{ .Values.global.sparDBUser }}'
   envVarsFrom:
     SPAR_BENE_PORTAL_API_DB_PASSWORD:
       secretKeyRef:
-        name: '{{ .Release.Name }}-postgresql'
-        key: password
+        name: '{{ .Values.global.sparDBSecret }}'
+        key: '{{ .Values.global.sparDBUserPasswordKey }}'
   containerPort: 8000
   service:
     type: ClusterIP
@@ -167,10 +158,10 @@ spar-mapper-api:
   fullnameOverride: ""
   envVars:
     SPAR_MAPPER_API_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
-    SPAR_MAPPER_API_OAUTH_TOKEN_URL: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/protocol/openid-connect/token'
+    SPAR_MAPPER_API_OAUTH_TOKEN_URL: '{{ tpl .Values.keycloakIssuerUrl $ }}/protocol/openid-connect/token'
     # TODO: Convert these to be stored in secret
-    SPAR_MAPPER_API_OAUTH_CLIENT_ID: '{{ tpl .Values.global.sparAuthClientId $ }}'
-    SPAR_MAPPER_API_OAUTH_CLIENT_SECRET: '{{ tpl .Values.global.sparAuthClientSecret $ }}'
+    SPAR_MAPPER_API_OAUTH_CLIENT_ID: '{{ tpl .Values.sparAuthClientId $ }}'
+    SPAR_MAPPER_API_OAUTH_CLIENT_SECRET: '{{ tpl .Values.sparAuthClientSecret $ }}'
     SPAR_MAPPER_API_JWT_VERIFY_URL: 'http://{{ .Values.keymanagerInstallationName }}/v1/keymanager/jwtVerify'
     SPAR_MAPPER_API_DB_USERNAME: "sparuser"
     SPAR_MAPPER_API_DB_DBNAME: "spardb"
@@ -383,8 +374,8 @@ spar-self-service-api:
   envVars:
     SPAR_SELFSERVICE_DB_HOSTNAME: '{{ .Release.Name }}-postgresql'
     SPAR_SELFSERVICE_MAPPER_API_URL: 'http://{{ .Release.Name }}-spar-mapper-api/sync'
-    SPAR_SELFSERVICE_AUTH_DEFAULT_ISSUERS: '["{{ .Values.global.esignetBaseUrl }}"]'
-    SPAR_SELFSERVICE_AUTH_DEFAULT_JWKS_URLS: '["{{ .Values.global.esignetBaseUrl }}/.well-known/jwks.json"]'
+    SPAR_SELFSERVICE_AUTH_DEFAULT_ISSUERS: '["{{ .Values.esignetBaseUrl }}"]'
+    SPAR_SELFSERVICE_AUTH_DEFAULT_JWKS_URLS: '["{{ .Values.esignetBaseUrl }}/.well-known/jwks.json"]'
     SPAR_SELFSERVICE_DB_USERNAME: "sparuser"
     SPAR_SELFSERVICE_DB_DBNAME: "spardb"
     SPAR_SELFSERVICE_OPENAPI_ROOT_PATH: "/api/selfservice"
