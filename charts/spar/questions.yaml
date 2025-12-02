@@ -1,4 +1,5 @@
 questions:
+# TODO: Add benePortalHostname
 - variable: global.sparHostname
   description: Hostname under which all SPAR services will be accessed
   type: string

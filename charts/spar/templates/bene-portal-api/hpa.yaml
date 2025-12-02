@@ -1,4 +1,4 @@
-{{- $values := index .Values "bene-portal-api" -}}
+{{- $values := index .Values "benePortalAPI" -}}
 {{- $global := .Values.global -}}
 {{- if $values.autoscaling.enabled }}
 apiVersion: autoscaling/v2

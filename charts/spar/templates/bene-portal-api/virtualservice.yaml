@@ -1,4 +1,4 @@
-{{- $values := index .Values "bene-portal-api" -}}
+{{- $values := index .Values "benePortalAPI" -}}
 {{- $global := .Values.global -}}
 {{- $scope := dict "Values" $values "Release" .Release "Chart" .Chart "Template" .Template "Capabilities" .Capabilities "Files" .Files -}}
 {{- if $values.istio.enabled }}
@@ -11,7 +11,7 @@ metadata:
     {{- include "beneportal.labels" . | nindent 4 }}
 spec:
   hosts:
-  - {{ default $global.benePortalHostname $values.istio.virtualservice.host | quote }}
+  - {{ default $values.benePortalHostname $values.istio.virtualservice.host | quote }}
   gateways:
   - {{ default (include "beneportal.fullname" .) $values.istio.virtualservice.gateway }}
   http:

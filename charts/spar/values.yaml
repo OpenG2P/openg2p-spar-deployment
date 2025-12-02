@@ -33,8 +33,9 @@ postgres-init:
       secret: '{{ tpl .Values.global.sparDBSecret $ }}'
       secretUserPasswordKey: '{{ tpl .Values.global.sparDBUserPasswordKey $ }}'
 
-bene-portal-api:
+benePortalAPI:
   enabled: true
+  benePortalHostname: beneficiary.devops.openg2p.org 
   replicaCount: 1
   image:
     repository: openg2p/openg2p-spar-bene-portal-api

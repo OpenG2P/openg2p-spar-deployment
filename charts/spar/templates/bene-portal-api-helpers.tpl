@@ -2,7 +2,7 @@
 Expand the name of the chart.
 */}}
 {{- define "beneportal.name" -}}
-{{- $values := index .Values "bene-portal-api" -}}
+{{- $values := index .Values "benePortalAPI" -}}
 {{- default "bene-portal-api" $values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -12,7 +12,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 If release name contains chart name it will be used as a full name.
 */}}
 {{- define "beneportal.fullname" -}}
-{{- $values := index .Values "bene-portal-api" -}}
+{{- $values := index .Values "benePortalAPI" -}}
 {{- if $values.fullnameOverride }}
 {{- $values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -56,7 +56,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Create the name of the service account to use
 */}}
 {{- define "beneportal.serviceAccountName" -}}
-{{- $values := index .Values "bene-portal-api" -}}
+{{- $values := index .Values "benePortalAPI" -}}
 {{- if $values.serviceAccount.create }}
 {{- default (include "beneportal.fullname" .) $values.serviceAccount.name }}
 {{- else }}
@@ -91,7 +91,7 @@ Render Env values section
 {{- end -}}
 
 {{- define "beneportal.envVars" -}}
-{{- $values := index .Values "bene-portal-api" -}}
+{{- $values := index .Values "benePortalAPI" -}}
 {{- $envVars := merge (deepCopy $values.envVars) (deepCopy $values.envVarsFrom) -}}
 {{- include "beneportal.baseEnvVars" (dict "envVars" $envVars "context" $) }}
 {{- end -}}

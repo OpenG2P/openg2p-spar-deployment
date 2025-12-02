@@ -1,4 +1,4 @@
-{{- $values := index .Values "bene-portal-api" -}}
+{{- $values := index .Values "benePortalAPI" -}}
 {{- $global := .Values.global -}}
 apiVersion: apps/v1
 kind: Deployment
@@ -54,7 +54,7 @@ spec:
           env: {{- include "beneportal.envVars" . | nindent 12 }}
         {{- end }}
       containers:
-        - name: "bene-portal-api"
+        - name: "openg2p-spar-bene-portal-apiI"
           {{- with $values.containerSecurityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
