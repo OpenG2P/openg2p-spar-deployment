@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "beneportal.fullname" . }}
+  name: {{ include "common.names.fullname" $ }}-bene-portal-api
   labels:
     {{- include "beneportal.labels" . | nindent 4 }}
 spec:

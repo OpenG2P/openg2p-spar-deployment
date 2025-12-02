@@ -6,14 +6,14 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: {{ include "mapper.fullname" . }}
+  name: {{ include "common.names.fullname" $ }}-mapper-api
   labels:
     {{- include "mapper.labels" . | nindent 4 }}
 spec:
   hosts:
   - {{ default $global.sparHostname $values.istio.virtualservice.host | quote }}
   gateways:
-  - {{ default (include "mapper.fullname" .) $values.istio.virtualservice.gateway }}
+  - {{ default (include "mapper.name" .) $values.istio.virtualservice.gateway }}
   http:
   - match:
     - uri:

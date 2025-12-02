@@ -3,7 +3,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "mapper.fullname" . }}
+  name: {{ include "common.names.fullname" $ }}-mapper-api
   labels:
     {{- include "mapper.labels" . | nindent 4 }}
 spec:

@@ -52,14 +52,14 @@ sparMapperAPI:
     SPAR_MAPPER_API_OAUTH_CLIENT_ID: '{{ tpl .Values.sparAuthClientId $ }}'
     SPAR_MAPPER_API_OAUTH_CLIENT_SECRET: '{{ tpl .Values.sparAuthClientSecret $ }}'
     SPAR_MAPPER_API_JWT_VERIFY_URL: 'http://{{ .Values.keymanagerInstallationName }}/v1/keymanager/jwtVerify'
-    SPAR_MAPPER_API_DB_DBNAME: '{{ .Values.global.sparDB }}' 
-    SPAR_MAPPER_API_DB_USERNAME: '{{ .Values.global.sparDBUser }}'
+    SPAR_MAPPER_API_DB_DBNAME: '{{ tpl .Values.global.sparDB $ }}'
+    SPAR_MAPPER_API_DB_USERNAME: '{{ tpl .Values.global.sparDBUser $ }}'
     SPAR_MAPPER_API_OPENAPI_ROOT_PATH: "/api/mapper"
   envVarsFrom:
     SPAR_MAPPER_API_DB_PASSWORD:
       secretKeyRef:
-        name: '{{ .Values.global.sparDBSecret }}'
-        key:  '{{ .Values.global.sparDBUserPasswordKey}}'
+        name: '{{ tpl .Values.global.sparDBSecret $ }}'
+        key:  '{{ tpl .Values.global.sparDBUserPasswordKey $ }}'
   containerPort: 8000
   service:
     type: ClusterIP
@@ -135,7 +135,7 @@ sparMapperAPI:
       enabled: true
       host: ""
       gateway: "internal"
-      destination: '{{ include "mapper.fullname" . }}'
+      destination: '{{ include "common.names.fullname" $ }}-mapper-api'
       destinationPort: '{{ .Values.service.port }}'
       prefix: /api/mapper/
       rewriteUri: "/"
@@ -165,13 +165,13 @@ benePortalAPI:
   envVars:
     SPAR_BENE_PORTAL_API_DB_HOSTNAME: '{{ .Values.global.postgresqlHost }}'
     SPAR_BENE_PORTAL_API_DB_PORT: '5432'
-    SPAR_BENE_PORTAL_API_DB_DBNAME: '{{ .Values.global.sparDB }}'
-    SPAR_BENE_PORTAL_API_DB_USERNAME: '{{ .Values.global.sparDBUser }}'
+    SPAR_BENE_PORTAL_API_DB_DBNAME: '{{ tpl .Values.global.sparDB $ }}'
+    SPAR_BENE_PORTAL_API_DB_USERNAME: '{{ tpl .Values.global.sparDBUser $ }}' 
   envVarsFrom:
     SPAR_BENE_PORTAL_API_DB_PASSWORD:
       secretKeyRef:
-        name: '{{ .Values.global.sparDBSecret }}'
-        key: '{{ .Values.global.sparDBUserPasswordKey }}'
+        name: '{{ tpl .Values.global.sparDBSecret $ }}'
+        key: '{{ tpl .Values.global.sparDBUserPasswordKey $ }}'
   containerPort: 8000
   service:
     type: ClusterIP
@@ -247,7 +247,7 @@ benePortalAPI:
       enabled: true
       host: ""
       gateway: "internal"
-      destination: '{{ include "beneportal.fullname" . }}'
+      destination: '{{ include "common.names.fullname" $ }}-bene-portal-api'
       destinationPort: '{{ .Values.service.port }}'
       prefix: /api/bene-portal/
       rewriteUri: "/"

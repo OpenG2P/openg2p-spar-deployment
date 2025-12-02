@@ -1,31 +1,44 @@
 questions:
-# TODO: Add benePortalHostname
-- variable: global.sparHostname
+# SPAR Mapper
+- variable: sparHostname
   description: Hostname under which all SPAR services will be accessed
   type: string
   label: SPAR Hostname
 
-- variable: spar-mapper-api.enabled
+- variable: sparMapperAPI.enabled
   description: Install SPAR Mapper
   type: boolean
   label: SPAR Mapper
 
-- variable: global.esignetBaseUrl
-  description: Base URL of eSignet. SPAR will considered this esignet as valid Authenticator.
+# Beneficary portal
+- variable: benePortalAPI.enabled
+  description: Install Beneficiary Portal APIs
+  type: boolean
+  label: Beneficiary Portal API
+
+- variable: benePortalAPI.benePortalHostname
+  description: Domain name for Beneficiary Portal
+  type: string
+  label: Beneficiary Portal Domain Name
+
+# eSignet
+- variable: esignetBaseUrl
+  description: Base URL of eSignet. SPAR will considered this eSignet as valid Authenticator.
   type: string
   label: eSignet Base URL
 
-- variable: global.keycloakBaseUrl
+# Keycloak
+- variable: keycloakBaseUrl
   description: Keycloak Base Url. Used for authentication of some API
   type: string
   label: Keycloak Base URL
 
-- variable: global.sparAuthClientId
+- variable: sparAuthClientId
   description: OIDC Client ID for PBMS
   type: string
   label: OIDC Client ID
 
-- variable: global.sparAuthClientSecret
+- variable: sparAuthClientSecret
   description: OIDC Client Secret for PBMS
   type: string
   label: OIDC Client Secret

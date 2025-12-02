@@ -3,7 +3,7 @@ Expand the name of the chart.
 */}}
 {{- define "beneportal.name" -}}
 {{- $values := index .Values "benePortalAPI" -}}
-{{- default "bene-portal-api" $values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- default "spar-bene-portal-api" $values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*

@@ -4,14 +4,14 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "beneportal.fullname" . }}
+  name: {{ include "common.names.fullname" $ }}-bene-portal-api
   labels:
     {{- include "beneportal.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "beneportal.fullname" . }}
+    name: {{ include "common.names.fullname" $ }}-bene-portal-api
   minReplicas: {{ $values.autoscaling.minReplicas }}
   maxReplicas: {{ $values.autoscaling.maxReplicas }}
   metrics:

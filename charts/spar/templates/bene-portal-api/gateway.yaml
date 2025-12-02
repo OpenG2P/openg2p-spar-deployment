@@ -5,7 +5,7 @@
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
-  name: {{ include "beneportal.fullname" . }}
+  name: {{ include "common.names.fullname" $ }}-bene-portal-api
   labels:
     {{- include "beneportal.labels" . | nindent 4 }}
 spec:
