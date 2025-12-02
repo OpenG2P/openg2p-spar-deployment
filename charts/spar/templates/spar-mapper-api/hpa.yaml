@@ -1,4 +1,4 @@
-{{- $values := index .Values "spar-mapper-api" -}}
+{{- $values := index .Values "sparMapperAPI" -}}
 {{- $global := .Values.global -}}
 {{- if $values.autoscaling.enabled }}
 apiVersion: autoscaling/v2

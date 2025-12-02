@@ -2,7 +2,7 @@
 Expand the name of the chart.
 */}}
 {{- define "mapper.name" -}}
-{{- $values := index .Values "spar-mapper-api" -}}
+{{- $values := index .Values "sparMapperAPI" -}}
 {{- default "spar-mapper-api" $values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -12,7 +12,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 If release name contains chart name it will be used as a full name.
 */}}
 {{- define "mapper.fullname" -}}
-{{- $values := index .Values "spar-mapper-api" -}}
+{{- $values := index .Values "sparMapperAPI" -}}
 {{- if $values.fullnameOverride }}
 {{- $values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -56,7 +56,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Create the name of the service account to use
 */}}
 {{- define "mapper.serviceAccountName" -}}
-{{- $values := index .Values "spar-mapper-api" -}}
+{{- $values := index .Values "sparMapperAPI" -}}
 {{- if $values.serviceAccount.create }}
 {{- default (include "mapper.fullname" .) $values.serviceAccount.name }}
 {{- else }}
@@ -91,7 +91,7 @@ Render Env values section
 {{- end -}}
 
 {{- define "mapper.envVars" -}}
-{{- $values := index .Values "spar-mapper-api" -}}
+{{- $values := index .Values "sparMapperAPI" -}}
 {{- $envVars := merge (deepCopy $values.envVars) (deepCopy $values.envVarsFrom) -}}
 {{- include "mapper.baseEnvVars" (dict "envVars" $envVars "context" $) }}
 {{- end -}}
