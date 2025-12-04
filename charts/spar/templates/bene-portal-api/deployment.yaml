@@ -54,7 +54,7 @@ spec:
           env: {{- include "beneportal.envVars" . | nindent 12 }}
         {{- end }}
       containers:
-        - name: "openg2p-spar-bene-portal-apiI"
+        - name: "openg2p-spar-bene-portal-api"
           {{- with $values.containerSecurityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}

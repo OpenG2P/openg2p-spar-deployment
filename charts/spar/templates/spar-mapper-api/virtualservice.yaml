@@ -11,7 +11,7 @@ metadata:
     {{- include "mapper.labels" . | nindent 4 }}
 spec:
   hosts:
-  - {{ default $global.sparHostname $values.istio.virtualservice.host | quote }}
+  - {{ default $values.sparHostname $values.istio.virtualservice.host | quote }}
   gateways:
   - {{ default (include "mapper.name" .) $values.istio.virtualservice.gateway }}
   http:

@@ -4,10 +4,13 @@ description: A Helm chart for OpenG2P SPAR
 type: application
 version: 2.0.0-develop 
 dependencies:
-- name: postgresql
+- name: common
   repository: https://openg2p.github.io/openg2p-helm
-  version: 15.5.38
-  condition: postgresql.enabled
+  version: 2.30.0
+- name: postgres-init
+  version: 0.0.0-develop
+  repository: https://openg2p.github.io/openg2p-helm
+  condition: postgres-init.enabled
 icon: https://openg2p.github.io/openg2p-helm/openg2p-logo.png
 annotations:
   catalog.cattle.io/display-name: "OpenG2P SPAR"
