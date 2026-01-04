@@ -1,5 +1,5 @@
 global:
-  postgresqlHost: openg2p-commons-postgresql
+  postgresqlHost: commons-postgresql
   sparDB: '{{ .Release.Name }}_db'
   sparDBUser: '{{ .Release.Name }}_db_user'
   sparDBSecret: '{{ .Release.Name }}'
@@ -14,7 +14,7 @@ sparAuthClientSecret: ''
 esignetBaseUrl: https://esignet.sandbox.openg2p.net
 
   # Internal service name of Keymanager
-keymanagerInstallationName: openg2p-commons-keymanager
+keymanagerInstallationName: commons-keymanager
 
 postgres-init:
   enabled: true
@@ -22,7 +22,7 @@ postgres-init:
     host: '{{ .Values.global.postgresqlHost }}'
     port: 5432
     # Hard coding. Same as one defined under Odoo
-    existingSecret: openg2p-commons-postgresql
+    existingSecret: commons-postgresql
     existingSecretPostgresPasswordKey: postgres-password
   databases:
     # Same as db in Odoo
