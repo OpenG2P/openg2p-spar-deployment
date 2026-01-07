@@ -34,12 +34,12 @@ questions:
   label: Keycloak Base URL
 
 - variable: sparAuthClientId
-  description: OIDC Client ID for PBMS
+  description: OIDC Client ID for SPAR 
   type: string
   label: OIDC Client ID
 
 - variable: sparAuthClientSecret
-  description: OIDC Client Secret for PBMS
+  description: OIDC Client Secret for SPAR 
   type: string
   label: OIDC Client Secret
 
