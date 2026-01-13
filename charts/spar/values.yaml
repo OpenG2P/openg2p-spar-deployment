@@ -1,4 +1,4 @@
-global: 
+global:
   postgresqlHost: commons-postgresql
   sparDB: '{{ .Release.Name }}_db'
   sparDBUser: '{{ .Release.Name }}_db_user'
@@ -12,7 +12,7 @@ keycloakIssuerUrl: '{{ tpl .Values.keycloakBaseUrl $ }}/realms/master'
 sparAuthClientId: 'openg2p-spar-{{ .Release.Namespace }}'
 # Name of the secret in Kuberentes containing (DO NOT password directly here)
 # Same name as client id by convension.
-sparAuthClientSecret: '{{ tpl .Values.sparAuthClientId $ }}' 
+sparAuthClientSecret: '{{ tpl .Values.sparAuthClientId $ }}'
 # Key containing client password. Hardcoded in Keycloak Init script
 sparAuthClientSecretKey: 'client_secret'
 
