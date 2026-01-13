@@ -1,17 +1,22 @@
-global:
+global: 
   postgresqlHost: commons-postgresql
   sparDB: '{{ .Release.Name }}_db'
   sparDBUser: '{{ .Release.Name }}_db_user'
   sparDBSecret: '{{ .Release.Name }}'
   sparDBUserPasswordKey: '{{ .Release.Name }}_db_user'
 
-keycloakBaseUrl: https://keycloak.openg2p.org
+keycloakBaseUrl: https://keycloak2.openg2p.org
 keycloakIssuerUrl: '{{ tpl .Values.keycloakBaseUrl $ }}/realms/master'
 
-sparAuthClientId: 'openg2p-spar'
-sparAuthClientSecret: ''
+# This is the typical default name of the client and secret
+sparAuthClientId: 'openg2p-spar-{{ .Release.Namespace }}'
+# Name of the secret in Kuberentes containing (DO NOT password directly here)
+# Same name as client id by convension.
+sparAuthClientSecret: '{{ tpl .Values.sparAuthClientId $ }}' 
+# Key containing client password. Hardcoded in Keycloak Init script
+sparAuthClientSecretKey: 'client_secret'
 
-esignetBaseUrl: https://esignet.sandbox.openg2p.net
+esignetBaseUrl: https://commons-esignet
 
   # Internal service name of Keymanager
 keymanagerInstallationName: commons-keymanager
@@ -33,7 +38,7 @@ postgres-init:
 
 sparMapperAPI:
   enabled: true
-  sparHostname: spar.sandbox.openg2p.net
+  sparHostname: spar.play.openg2p.net
   postgresql:
     enabled: false
   replicaCount: 1
@@ -47,9 +52,7 @@ sparMapperAPI:
   envVars:
     SPAR_MAPPER_API_DB_HOSTNAME: '{{ .Values.global.postgresqlHost }}'
     SPAR_MAPPER_API_OAUTH_TOKEN_URL: '{{ tpl .Values.keycloakIssuerUrl $ }}/protocol/openid-connect/token'
-    # TODO: Convert these to be stored in secret
     SPAR_MAPPER_API_OAUTH_CLIENT_ID: '{{ tpl .Values.sparAuthClientId $ }}'
-    SPAR_MAPPER_API_OAUTH_CLIENT_SECRET: '{{ tpl .Values.sparAuthClientSecret $ }}'
     SPAR_MAPPER_API_JWT_VERIFY_URL: 'http://{{ .Values.keymanagerInstallationName }}/v1/keymanager/jwtVerify'
     SPAR_MAPPER_API_DB_DBNAME: '{{ tpl .Values.global.sparDB $ }}'
     SPAR_MAPPER_API_DB_USERNAME: '{{ tpl .Values.global.sparDBUser $ }}'
@@ -59,6 +62,11 @@ sparMapperAPI:
       secretKeyRef:
         name: '{{ tpl .Values.global.sparDBSecret $ }}'
         key:  '{{ tpl .Values.global.sparDBUserPasswordKey $ }}'
+    SPAR_MAPPER_API_OAUTH_CLIENT_SECRET:
+      secretKeyRef:
+        name: '{{ tpl .Values.sparAuthClientSecret $ }}'
+        key: '{{ tpl .Values.sparAuthClientSecretKey $ }}'
+
   containerPort: 8000
   service:
     type: ClusterIP
@@ -152,7 +160,7 @@ sparMapperAPI:
 
 benePortalAPI:
   enabled: true
-  benePortalHostname: beneficiary.devops.openg2p.org
+  benePortalHostname: beneficiary.play.openg2p.org
   replicaCount: 1
   image:
     repository: openg2p/openg2p-spar-bene-portal-api
