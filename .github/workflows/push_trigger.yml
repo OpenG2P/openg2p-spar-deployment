@@ -1,4 +1,4 @@
-name: Publish OpenG2P Helm charts on
+name: Publish chart on OpenG2P official repository 
 
 on:
   push:
