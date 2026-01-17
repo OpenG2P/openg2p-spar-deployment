@@ -1,47 +1,42 @@
 questions:
 # SPAR Mapper
 - variable: sparHostname
-  description: Hostname under which all SPAR services will be accessed
+  description: Hostname for all SPAR services
   type: string
   label: SPAR Hostname
 
-- variable: sparMapperAPI.enabled
-  description: Install SPAR Mapper
-  type: boolean
-  label: SPAR Mapper
-
 # Beneficary portal
-- variable: benePortalAPI.enabled
-  description: Install Beneficiary Portal APIs
-  type: boolean
-  label: Beneficiary Portal API
-
 - variable: benePortalAPI.benePortalHostname
-  description: Domain name for Beneficiary Portal
+  description: Hostname for Beneficiary Portal
   type: string
-  label: Beneficiary Portal Domain Name
+  label: Beneficiary Portal Hostname
 
 # eSignet
 - variable: esignetBaseUrl
-  description: Base URL of eSignet. SPAR will considered this eSignet as valid Authenticator.
+  description: Base URL of eSignet for authentication
   type: string
   label: eSignet Base URL
 
 # Keycloak
 - variable: keycloakBaseUrl
-  description: Keycloak Base Url. Used for authentication of some API
+  description: Keycloak base URL for client authentication
   type: string
   label: Keycloak Base URL
 
 - variable: sparAuthClientId
-  description: OIDC Client ID for SPAR
+  description: OIDC client ID
   type: string
   label: OIDC Client ID
 
 - variable: sparAuthClientSecret
-  description: OIDC Client Secret for SPAR
+  description: OIDC client Kuberenetes secret name
   type: string
-  label: OIDC Client Secret
+  label: OIDC Client Secret Name
+
+- variable: sparAuthClientSecretKey
+  description: Key containing OIDC client password
+  type: string
+  label: OIDC Client Secret Key
 
 # Keymanager
 - variable: keymanagerInstallationName
