@@ -1,11 +1,11 @@
 questions:
-# SPAR Mapper
+# SPAR Partner API 
 - variable: sparHostname
   description: Hostname for all SPAR services
   type: string
   label: SPAR Hostname
 
-# Beneficary portal
+# Beneficary portal API
 - variable: benePortalAPI.benePortalHostname
   description: Hostname for Beneficiary Portal
   type: string

@@ -36,33 +36,33 @@ postgres-init:
       secret: '{{ tpl .Values.global.sparDBSecret $ }}'
       secretUserPasswordKey: '{{ tpl .Values.global.sparDBUserPasswordKey $ }}'
 
-sparMapperAPI:
+mapper-partner-api:
   enabled: true
   sparHostname: spar.play.openg2p.net
   postgresql:
     enabled: false
   replicaCount: 1
   image:
-    repository: openg2p/openg2p-spar-mapper-api
+    repository: openg2p/openg2p-spar-mapper-partner-api
     pullPolicy: Always
-    tag: "2.0"
+    tag: "2.1.0"
   imagePullSecrets: []
   nameOverride: ""
   fullnameOverride: ""
   envVars:
-    SPAR_MAPPER_API_DB_HOSTNAME: '{{ .Values.global.postgresqlHost }}'
-    SPAR_MAPPER_API_OAUTH_TOKEN_URL: '{{ tpl .Values.keycloakIssuerUrl $ }}/protocol/openid-connect/token'
-    SPAR_MAPPER_API_OAUTH_CLIENT_ID: '{{ tpl .Values.sparAuthClientId $ }}'
-    SPAR_MAPPER_API_JWT_VERIFY_URL: 'http://{{ .Values.keymanagerInstallationName }}/v1/keymanager/jwtVerify'
-    SPAR_MAPPER_API_DB_DBNAME: '{{ tpl .Values.global.sparDB $ }}'
-    SPAR_MAPPER_API_DB_USERNAME: '{{ tpl .Values.global.sparDBUser $ }}'
-    SPAR_MAPPER_API_OPENAPI_ROOT_PATH: "/api/mapper"
+    SPAR_MAPPER_PARTNER_API_DB_HOSTNAME: '{{ .Values.global.postgresqlHost }}'
+    SPAR_MAPPER_PARTNER_API_OAUTH_TOKEN_URL: '{{ tpl .Values.keycloakIssuerUrl $ }}/protocol/openid-connect/token'
+    SPAR_MAPPER_PARTNER_API_OAUTH_CLIENT_ID: '{{ tpl .Values.sparAuthClientId $ }}'
+    SPAR_MAPPER_PARTNER_API_JWT_VERIFY_URL: 'http://{{ .Values.keymanagerInstallationName }}/v1/keymanager/jwtVerify'
+    SPAR_MAPPER_PARTNER_API_DB_DBNAME: '{{ tpl .Values.global.sparDB $ }}'
+    SPAR_MAPPER_PARTNER_API_DB_USERNAME: '{{ tpl .Values.global.sparDBUser $ }}'
+    SPAR_MAPPER_PARTNER_API_OPENAPI_ROOT_PATH: "/api/mapper"
   envVarsFrom:
-    SPAR_MAPPER_API_DB_PASSWORD:
+    SPAR_MAPPER_PARTNER_API_DB_PASSWORD:
       secretKeyRef:
         name: '{{ tpl .Values.global.sparDBSecret $ }}'
         key:  '{{ tpl .Values.global.sparDBUserPasswordKey $ }}'
-    SPAR_MAPPER_API_OAUTH_CLIENT_SECRET:
+    SPAR_MAPPER_PARTNER_API_OAUTH_CLIENT_SECRET:
       secretKeyRef:
         name: '{{ tpl .Values.sparAuthClientSecret $ }}'
         key: '{{ tpl .Values.sparAuthClientSecretKey $ }}'
@@ -123,7 +123,7 @@ sparMapperAPI:
     command:
     - 'sh'
     - '-c'
-    - 'until pg_isready -U ${SPAR_MAPPER_API_DB_USERNAME} -h ${SPAR_MAPPER_API_DB_HOSTNAME} -p ${SPAR_MAPPER_API_DB_PORT:-5432} -d ${SPAR_MAPPER_API_DB_DBNAME:-spar_db}; do sleep 3; done'
+    - 'until pg_isready -U ${SPAR_MAPPER_PARTNER_API_DB_USERNAME} -h ${SPAR_MAPPER_PARTNER_API_DB_HOSTNAME} -p ${SPAR_MAPPER_PARTNER_API_DB_PORT:-5432} -d ${SPAR_MAPPER_PARTNER_API_DB_DBNAME:-spar_db}; do sleep 3; done'
   ingress:
     enabled: false
     className: ""
@@ -165,7 +165,7 @@ benePortalAPI:
   image:
     repository: openg2p/openg2p-spar-bene-portal-api
     pullPolicy: Always
-    tag: "2.0"
+    tag: "2.1.0"
   imagePullSecrets: []
   nameOverride: ""
   fullnameOverride: ""
