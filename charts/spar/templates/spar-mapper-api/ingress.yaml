@@ -1,4 +1,4 @@
-{{- $values := index .Values "sparMapperAPI" -}}
+{{- $values := index .Values "mapper-partner-api" -}}
 {{- $global := .Values.global -}}
 {{- if $values.ingress.enabled -}}
 {{- $fullName := include "mapper.fullname" . -}}
