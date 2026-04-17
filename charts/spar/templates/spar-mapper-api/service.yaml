@@ -1,4 +1,4 @@
-{{- $values := index .Values "sparMapperAPI" -}}
+{{- $values := index .Values "mapper-partner-api" -}}
 {{- $global := .Values.global -}}
 apiVersion: v1
 kind: Service
