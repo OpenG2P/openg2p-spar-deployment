@@ -1,9 +1,9 @@
 global:
   postgresqlHost: commons-postgresql
-  sparDB: '{{ .Release.Name }}_db'
-  sparDBUser: '{{ .Release.Name }}_db_user'
+  sparDB: '{{ printf "%s" .Release.Name | replace "-" "_" }}'
+  sparDBUser: '{{ printf "%s_user" .Release.Name | replace "-" "_" }}'
   sparDBSecret: '{{ .Release.Name }}'
-  sparDBUserPasswordKey: '{{ .Release.Name }}_db_user'
+  sparDBUserPasswordKey: '{{ .Release.Name }}-db-user'
 
 keycloakBaseUrl: https://keycloak2.openg2p.org
 keycloakIssuerUrl: '{{ tpl .Values.keycloakBaseUrl $ }}/realms/master'
