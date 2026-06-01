@@ -8,6 +8,7 @@ on:
       - 1.*
       - develop
       - main
+      - 2.*
   workflow_dispatch:
     inputs:
       forcePublishCharts:
