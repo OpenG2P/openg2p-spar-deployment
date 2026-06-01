@@ -9,7 +9,6 @@ on:
       - 2.*
       - develop
       - main
-      - 2.*
   workflow_dispatch:
     inputs:
       forcePublishCharts:
