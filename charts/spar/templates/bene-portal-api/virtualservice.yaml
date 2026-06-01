@@ -3,7 +3,7 @@
 {{- $scope := dict "Values" $values "Release" .Release "Chart" .Chart "Template" .Template "Capabilities" .Capabilities "Files" .Files -}}
 {{- if $values.istio.enabled }}
 {{- if $values.istio.virtualservice.enabled }}
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: {{ include "common.names.fullname" $ }}-bene-portal-api

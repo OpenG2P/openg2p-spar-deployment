@@ -92,6 +92,6 @@ Render Env values section
 
 {{- define "mapper.envVars" -}}
 {{- $values := index .Values "sparMapperAPI" -}}
-{{- $envVars := merge (deepCopy $values.envVars) (deepCopy $values.envVarsFrom) -}}
+{{- $envVars := merge (deepCopy ($values.envVars | default dict)) (deepCopy ($values.envVarsFrom | default dict)) -}}
 {{- include "mapper.baseEnvVars" (dict "envVars" $envVars "context" $) }}
 {{- end -}}

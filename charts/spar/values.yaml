@@ -16,9 +16,7 @@ sparAuthClientSecret: '{{ tpl .Values.sparAuthClientId $ }}'
 # Key containing client password. Hardcoded in Keycloak Init script
 sparAuthClientSecretKey: 'client_secret'
 
-esignetBaseUrl: https://commons-esignet
-
-  # Internal service name of Keymanager
+# Internal service name of Keymanager
 keymanagerInstallationName: commons-keymanager
 
 postgres-init:
@@ -36,7 +34,7 @@ postgres-init:
       secret: '{{ tpl .Values.global.sparDBSecret $ }}'
       secretUserPasswordKey: '{{ tpl .Values.global.sparDBUserPasswordKey $ }}'
 
-mapper-partner-api:
+sparMapperAPI:
   enabled: true
   sparHostname: spar.play.openg2p.net
   postgresql:

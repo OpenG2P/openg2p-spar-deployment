@@ -40,7 +40,7 @@ spec:
   {{- end }}
   rules:
     {{- range $values.ingress.hosts }}
-    - host: {{- .host | ternary .host $values.benePortalHostname | quote }}
+    - host: {{ .host | default $values.benePortalHostname | quote }}
       http:
         paths:
           {{- range .paths }}

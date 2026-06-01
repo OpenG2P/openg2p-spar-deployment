@@ -16,7 +16,7 @@ If release name contains chart name it will be used as a full name.
 {{- if $values.fullnameOverride }}
 {{- $values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- $name := default "bene-portal-api" $values.nameOverride }}
+{{- $name := default "spar-bene-portal-api" $values.nameOverride }}
 {{- if contains $name .Release.Name }}
 {{- .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -92,6 +92,6 @@ Render Env values section
 
 {{- define "beneportal.envVars" -}}
 {{- $values := index .Values "benePortalAPI" -}}
-{{- $envVars := merge (deepCopy $values.envVars) (deepCopy $values.envVarsFrom) -}}
+{{- $envVars := merge (deepCopy ($values.envVars | default dict)) (deepCopy ($values.envVarsFrom | default dict)) -}}
 {{- include "beneportal.baseEnvVars" (dict "envVars" $envVars "context" $) }}
 {{- end -}}

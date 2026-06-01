@@ -40,7 +40,7 @@ spec:
   {{- end }}
   rules:
     {{- range $values.ingress.hosts }}
-    - host: {{- .host | ternary .host $values.sparHostname | quote }}
+    - host: {{ .host | default $values.sparHostname | quote }}
       http:
         paths:
           {{- range .paths }}
