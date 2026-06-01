@@ -17,7 +17,7 @@ sparAuthClientSecret: '{{ tpl .Values.sparAuthClientId $ }}'
 sparAuthClientSecretKey: 'client_secret'
 
 # Internal service name of Keymanager
-keymanagerInstallationName: commons-keymanager
+keymanagerInstallationName: commons-services-keymanager
 
 postgres-init:
   enabled: true
