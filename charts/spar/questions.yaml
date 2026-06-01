@@ -1,115 +1,47 @@
 questions:
-- variable: global.sparHostname
-  description: Hostname under which all SPAR services will be accessed
+# SPAR Partner API 
+- variable: sparHostname
+  description: Hostname for all SPAR services
   type: string
   label: SPAR Hostname
 
-- variable: spar-mapper-api.enabled
-  description: Install SPAR Mapper
-  type: boolean
-  label: SPAR Mapper
+# Beneficary portal API
+- variable: benePortalAPI.benePortalHostname
+  description: Hostname for Beneficiary Portal
+  type: string
+  label: Beneficiary Portal Hostname
 
-- variable: spar-self-service-api.enabled
-  description: Install self-service portal backend
-  type: boolean
-  label: SPAR Self Service API
-
-- variable: spar-self-service-ui.enabled
-  description: Install self-service portal frontend
-  type: boolean
-  label: SPAR Self Service UI
-
-- variable: global.esignetBaseUrl
-  description: Base URL of eSignet. SPAR will considered this esignet as valid Authenticator.
+# eSignet
+- variable: esignetBaseUrl
+  description: Base URL of eSignet for authentication
   type: string
   label: eSignet Base URL
 
-- variable: global.keycloakBaseUrl
-  description: Keycloak Base Url. Used for authentication of some API
+# Keycloak
+- variable: keycloakBaseUrl
+  description: Keycloak base URL for client authentication
   type: string
   label: Keycloak Base URL
 
-- variable: global.sparAuthClientId
-  description: OIDC Client ID for PBMS
+- variable: sparAuthClientId
+  description: OIDC client ID
   type: string
   label: OIDC Client ID
 
-- variable: global.sparAuthClientSecret
-  description: OIDC Client Secret for PBMS
+- variable: sparAuthClientSecret
+  description: OIDC client Kuberenetes secret name
   type: string
-  label: OIDC Client Secret
+  label: OIDC Client Secret Name
+
+- variable: sparAuthClientSecretKey
+  description: Key containing OIDC client password
+  type: string
+  label: OIDC Client Secret Key
 
 # Keymanager
-- variable: keymanager.enabled
-  description: This installs Keymanager for managing Keys for Encrpytion and Signatures
-  type: boolean
-  label: Install Keymanager?
-  group: Keymanager Settings
-
-- variable: global.sparKeymanagerInstallationName
+- variable: keymanagerInstallationName
   description: |-
-    Edit this only if you want to reuse existing Keymanager Installation.
-    Else enable Keymanager Installation from "General Settings".
+    Internal service name of Keymanager
   type: reference_service
-  label: Existing Keymanager Installation Name
+  label: Keymanager Service Name
   group: Keymanager Settings
-  show_if: "keymanager.enabled=false"
-
-- variable: keymanager.hostname
-  description: Hostname under which Keymanager should be accessible
-  type: string
-  label: Keymanager Hostname
-  group: Keymanager Settings
-  show_if: "keymanager.enabled=true"
-
-- variable: keymanager.springConfig.profile
-  type: string
-  label: Spring Config Profile
-  group: Keymanager Settings
-  show_if: "keymanager.enabled=true"
-
-- variable: keymanager.springConfig.names
-  type: string
-  label: Spring Config Names
-  group: Keymanager Settings
-  show_if: "keymanager.enabled=true"
-
-- variable: keymanager.springConfig.gitRepo.enabled
-  description: Enables download of configs from Git repo.
-  type: boolean
-  label: Spring Config Git Enabled
-  group: Keymanager Settings
-  show_if: "keymanager.enabled=true"
-  show_subquestion_if: true
-  subquestions:
-  - variable: keymanager.springConfig.gitRepo.repoUrl
-    description: |-
-      Repo Url for remote Git repo containing configs.
-      This url should include username password if required.
-    type: string
-    label: Spring Config Git Repo Url
-    group: Keymanager Settings
-
-  - variable: keymanager.springConfig.gitRepo.branch
-    description: Branch of remote Git repo containing configs.
-    type: string
-    label: Spring Config Git Repo Branch
-    group: Keymanager Settings
-
-- variable: keymanager.springConfig.rawConfig
-  description: |-
-    If git-based config is disabled, the complete application.properties can be
-    directly supplied here.
-  type: multiline
-  label: Spring Config application properties.
-  group: Keymanager Settings
-  show_if: "keymanager.enabled=true&&keymanager.springConfig.gitRepo.enabled=false"
-
-- variable: keymanager.envVars.auth_server_admin_allowed_audience
-  description: |-
-    List of Keycloak Client ID allowed to call this keymanager's APIs.
-    Do not edit this parameter unless required.
-  type: string
-  label: Allowed Keycloak Client IDs.
-  group: Keymanager Settings
-  show_if: "keymanager.enabled=true"
