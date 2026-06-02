@@ -5,19 +5,22 @@ global:
   sparDBSecret: '{{ .Release.Name }}'
   sparDBUserPasswordKey: '{{ .Release.Name }}-db-user'
 
-keycloakBaseUrl: https://keycloak2.openg2p.org
-keycloakIssuerUrl: '{{ tpl .Values.keycloakBaseUrl $ }}/realms/master'
-
-# This is the typical default name of the client and secret
-sparAuthClientId: 'openg2p-spar-{{ .Release.Namespace }}'
-# Name of the secret in Kuberentes containing (DO NOT password directly here)
-# Same name as client id by convension.
-sparAuthClientSecret: '{{ tpl .Values.sparAuthClientId $ }}'
-# Key containing client password. Hardcoded in Keycloak Init script
-sparAuthClientSecretKey: 'client_secret'
-
-# Internal service name of Keymanager
-keymanagerInstallationName: commons-services-keymanager
+  # Security & Authentication
+  # Internal service name of Keymanager
+  keymanagerInstallationName: commons-services-keymanager
+  # Public (namespace-scoped) Keycloak hostname used by apps for the OIDC
+  # issuer/token URL. The keycloak-init Job below talks to the same Keycloak
+  # over its internal cluster URL.
+  keycloakBaseUrl: 'https://keycloak.{{ .Release.Namespace }}.openg2p.org'
+  keycloakRealm: 'staff'
+  keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/{{ tpl .Values.global.keycloakRealm $ }}'
+  # OIDC client ID — must match the clientId provisioned in keycloak-init.realms
+  authClientId: 'openg2p-spar'
+  # K8s Secret name holding the client password (created by keycloak-init).
+  # By convention the Secret is named after the client ID.
+  authClientSecret: '{{ tpl .Values.global.authClientId $ }}'
+  # Key inside the secret containing the client password
+  authClientSecretKey: 'client_secret'
 
 postgres-init:
   enabled: true
@@ -34,9 +37,38 @@ postgres-init:
       secret: '{{ tpl .Values.global.sparDBSecret $ }}'
       secretUserPasswordKey: '{{ tpl .Values.global.sparDBUserPasswordKey $ }}'
 
+# Provisions the SPAR OIDC client in Keycloak. The Job is idempotent: it
+# creates the realm if absent and adds the client, leaving anything that
+# already exists untouched. For each confidential client it also creates a
+# K8s Secret named after the clientId (key: client_secret) with an
+# auto-generated password — this is the Secret the mapper API consumes via
+# global.authClientSecret / global.authClientSecretKey above.
+# NOTE: realm/clientId reference the global.* values (the only values visible
+# to a subchart) so they are defined once and never duplicated here.
+keycloak-init:
+  enabled: true
+  keycloak:
+    # Internal cluster URL of the Keycloak installed in this namespace.
+    url: 'http://commons-keycloak:80'
+    user: 'admin'
+    password: ''
+    # The Keycloak chart's auto-created admin secret (<commons-release>-keycloak).
+    existingSecret: 'commons-keycloak'
+    existingSecretKey: 'admin-password'
+  realms:
+    '{{ tpl .Values.global.keycloakRealm $ }}':
+      clients:
+        - clientId: '{{ tpl .Values.global.authClientId $ }}'
+          name: OpenG2P SPAR
+          # Confidential service-to-service client (OAuth2 client_credentials):
+          # the mapper API exchanges client id + secret for a token. It has no
+          # browser login flow, so no redirect URIs / web origins are needed.
+          redirectUris: []
+          webOrigins: []
+
 sparMapperAPI:
   enabled: true
-  sparHostname: spar.play.openg2p.net
+  sparHostname: spar.trial.openg2p.net
   postgresql:
     enabled: false
   replicaCount: 1
@@ -49,9 +81,9 @@ sparMapperAPI:
   fullnameOverride: ""
   envVars:
     SPAR_MAPPER_PARTNER_API_DB_HOSTNAME: '{{ .Values.global.postgresqlHost }}'
-    SPAR_MAPPER_PARTNER_API_OAUTH_TOKEN_URL: '{{ tpl .Values.keycloakIssuerUrl $ }}/protocol/openid-connect/token'
-    SPAR_MAPPER_PARTNER_API_OAUTH_CLIENT_ID: '{{ tpl .Values.sparAuthClientId $ }}'
-    SPAR_MAPPER_PARTNER_API_JWT_VERIFY_URL: 'http://{{ .Values.keymanagerInstallationName }}/v1/keymanager/jwtVerify'
+    SPAR_MAPPER_PARTNER_API_OAUTH_TOKEN_URL: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/protocol/openid-connect/token'
+    SPAR_MAPPER_PARTNER_API_OAUTH_CLIENT_ID: '{{ tpl .Values.global.authClientId $ }}'
+    SPAR_MAPPER_PARTNER_API_JWT_VERIFY_URL: 'http://{{ .Values.global.keymanagerInstallationName }}/v1/keymanager/jwtVerify'
     SPAR_MAPPER_PARTNER_API_DB_DBNAME: '{{ tpl .Values.global.sparDB $ }}'
     SPAR_MAPPER_PARTNER_API_DB_USERNAME: '{{ tpl .Values.global.sparDBUser $ }}'
     SPAR_MAPPER_PARTNER_API_OPENAPI_ROOT_PATH: "/api/mapper"
@@ -62,8 +94,8 @@ sparMapperAPI:
         key:  '{{ tpl .Values.global.sparDBUserPasswordKey $ }}'
     SPAR_MAPPER_PARTNER_API_OAUTH_CLIENT_SECRET:
       secretKeyRef:
-        name: '{{ tpl .Values.sparAuthClientSecret $ }}'
-        key: '{{ tpl .Values.sparAuthClientSecretKey $ }}'
+        name: '{{ tpl .Values.global.authClientSecret $ }}'
+        key: '{{ tpl .Values.global.authClientSecretKey $ }}'
 
   containerPort: 8000
   service:
@@ -158,7 +190,7 @@ sparMapperAPI:
 
 benePortalAPI:
   enabled: true
-  benePortalHostname: beneficiary.play.openg2p.org
+  benePortalHostname: beneficiary.trial.openg2p.org
   replicaCount: 1
   image:
     repository: openg2p/openg2p-spar-bene-portal-api
